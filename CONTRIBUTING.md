@@ -31,7 +31,7 @@ cd crashcue
 
 ### 2. Create a Branch
 
-Always create a feature branch from `main`:
+Always create a feature branch from `master`:
 
 ``` bash
 git checkout -b feature/your-feature-name

@@ -2,7 +2,7 @@
   "name": "crashcue-vscode",
   "displayName": "CrashCue",
   "description": "Audible feedback for failed terminal commands",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "engines": {
     "vscode": "^1.80.0"
   },

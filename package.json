@@ -1,8 +1,12 @@
 {
   "name": "crashcue",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "![CrashCue – Make your terminal scream](assets/CrashCue_Banner_img.png) # 🚨 CrashCue",
   "main": "index.js",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "test": "jest",
     "build": "tsc"

@@ -10,7 +10,8 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "paths": {
-      "@crashcue/shared-assets": ["packages/shared-assets/src/index.ts"]
+      "@crashcue/shared-assets": ["packages/shared-assets/src/index.ts"],
+      "@crashcue/notifier": ["packages/notifier/src/index.ts"]
     }
   },
   "include": ["src/**/*", "tests/**/*", "packages/**/*"],

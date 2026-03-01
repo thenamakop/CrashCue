@@ -1,0 +1,21 @@
+{
+  "name": "@crashcue/cli",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "bin": {
+    "crashcue": "dist/index.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@crashcue/notifier": "file:../notifier",
+    "@crashcue/shared-assets": "file:../shared-assets",
+    "yargs": "^17.0.0",
+    "conf": "^10.0.0"
+  },
+  "devDependencies": {
+    "@types/yargs": "^17.0.0",
+    "typescript": "^5.0.0"
+  }
+}

@@ -19,5 +19,6 @@ module.exports = {
   moduleNameMapper: {
     "^@crashcue/shared-assets$":
       "<rootDir>/packages/shared-assets/src/index.ts",
+    "^@crashcue/notifier$": "<rootDir>/packages/notifier/src/index.ts",
   },
 };

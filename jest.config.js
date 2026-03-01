@@ -11,10 +11,13 @@ module.exports = {
     "!tests/**/*.ts",
   ],
   coverageReporters: ["text", "lcov"],
-  globals: {
-    "ts-jest": {
-      tsconfig: "tsconfig.json",
-    },
+  transform: {
+    "^.+\\.tsx?$": [
+      "ts-jest",
+      {
+        tsconfig: "tsconfig.json",
+      },
+    ],
   },
   moduleNameMapper: {
     "^@crashcue/shared-assets$":
@@ -24,4 +27,5 @@ module.exports = {
       "<rootDir>/packages/shared-config/src/index.ts",
     "^vscode$": "<rootDir>/packages/vscode-extension/__mocks__/vscode.ts",
   },
+  modulePathIgnorePatterns: ["<rootDir>/dist/"],
 };

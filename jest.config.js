@@ -4,7 +4,12 @@ module.exports = {
   testMatch: ["**/tests/**/*.test.ts"],
   coverageDirectory: "coverage",
   collectCoverage: true,
-  collectCoverageFrom: ["src/**/*.ts", "!src/**/*.d.ts", "!tests/**/*.ts"],
+  collectCoverageFrom: [
+    "src/**/*.ts",
+    "packages/**/*.ts",
+    "!src/**/*.d.ts",
+    "!tests/**/*.ts",
+  ],
   coverageReporters: ["text", "lcov"],
   globals: {
     "ts-jest": {

@@ -14,6 +14,6 @@
       "@crashcue/notifier": ["packages/notifier/src/index.ts"]
     }
   },
-  "include": ["src/**/*", "tests/**/*", "packages/**/*"],
+  "include": ["src/**/*", "tests/**/*", "packages/**/*", "scripts/**/*"],
   "exclude": ["node_modules", "dist"]
 }

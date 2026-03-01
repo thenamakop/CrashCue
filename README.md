@@ -44,21 +44,25 @@ No more unnoticed crashes.
 
 ---
 
-## � Windows Audio Format
+## PowerShell 7 Integration (Recommended)
 
-On Windows, CrashCue uses native `.wav` playback via `System.Media.SoundPlayer`.
+CrashCue integrates directly with PowerShell 7 using a safe prompt hook.
 
-**Why WAV only?**
+On Windows:
 
-- Silent playback
-- No media player windows
-- No background processes
-- Native .NET API
-- Reliable system-level execution
+- WAV-only playback is enforced.
+- Uses native .NET SoundPlayer.
+- No visible media player window.
+- Fully silent background execution.
+- Triggers on non-zero $LASTEXITCODE.
 
-⚠️ **MP3 files are NOT supported on Windows** to ensure consistent, windowless behavior.
+### Why WAV-only?
 
-### Native PowerShell Profile Integration (Recommended)
+- Windows native SoundPlayer supports PCM WAV reliably.
+- MP3 introduces windowed players and inconsistent behavior.
+- To ensure silent native playback, CrashCue enforces WAV format on Windows.
+
+### Manual Setup (Optional)
 
 To enable silent, native playback directly from your PowerShell profile without spawning Node processes for every command, add this snippet to your `$PROFILE`:
 

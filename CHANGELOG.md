@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.1.1 — 2026-03-02
+
+### Changed
+
+- Removed debug logging from native Windows notifier
+- Removed crashcue-notify.log in production
+- Documented PowerShell 7 integration
+
 ## v0.1.0 — 2026-03-01
 
 ### Changed

@@ -1,0 +1,21 @@
+{
+  "name": "@crashcue/notifier",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "bin": {
+    "crashcue-notify": "dist/cli.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@crashcue/shared-assets": "file:../shared-assets",
+    "yargs": "^17.0.0",
+    "play-sound": "^1.1.6"
+  },
+  "devDependencies": {
+    "@types/yargs": "^17.0.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}

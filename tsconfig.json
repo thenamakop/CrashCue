@@ -8,7 +8,10 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "paths": {
+      "@crashcue/shared-assets": ["packages/shared-assets/src/index.ts"]
+    }
   },
   "include": ["src/**/*", "tests/**/*", "packages/**/*"],
   "exclude": ["node_modules", "dist"]

@@ -16,4 +16,8 @@ module.exports = {
       tsconfig: "tsconfig.json",
     },
   },
+  moduleNameMapper: {
+    "^@crashcue/shared-assets$":
+      "<rootDir>/packages/shared-assets/src/index.ts",
+  },
 };

@@ -113,6 +113,24 @@ describe("CrashCue CLI (Windows-Safe)", () => {
       expect(exitCode).toBe(1);
       expect(mockNotifier.notify).not.toHaveBeenCalled();
     });
+
+    test("should handle spawn error gracefully", async () => {
+      mockSpawn.mockReturnValue({
+        on: jest.fn((event, cb) => {
+          if (event === "error") cb(new Error("Spawn error"));
+        }),
+        stdout: { on: jest.fn() },
+        stderr: { on: jest.fn() },
+        unref: jest.fn(),
+        kill: jest.fn(),
+      });
+
+      // Should return exit code 1 on error and notify if notifyOnFailure is true (default in run)
+      const exitCode = await cli.run(["fail-cmd"]);
+      expect(exitCode).toBe(1);
+      // Error event triggers notify
+      expect(mockNotifier.notify).toHaveBeenCalled();
+    });
   });
 
   describe("mute/unmute commands", () => {

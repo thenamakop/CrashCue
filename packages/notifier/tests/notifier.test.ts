@@ -148,6 +148,64 @@ describe("Notifier (Windows-First)", () => {
       );
     });
 
+    test("should reject if PowerShell SoundPlayer fails", async () => {
+      // Mock spawn to fail
+      (spawn as jest.Mock).mockReturnValue({
+        on: jest.fn((event, cb) => {
+          if (event === "close") cb(1); // Exit code 1
+        }),
+        stdout: { on: jest.fn() },
+        stderr: { on: jest.fn() },
+        unref: jest.fn(),
+      });
+
+      const wavPath = "C:\\path\\to\\sound.wav";
+      await expect(notifier.notify({ sound: wavPath })).rejects.toThrow(
+        "PowerShell exited with code 1",
+      );
+    });
+
+    test("should reject if PowerShell spawn errors", async () => {
+      // Mock spawn to error
+      (spawn as jest.Mock).mockReturnValue({
+        on: jest.fn((event, cb) => {
+          if (event === "error") cb(new Error("Spawn failed"));
+        }),
+        stdout: { on: jest.fn() },
+        stderr: { on: jest.fn() },
+        unref: jest.fn(),
+      });
+
+      const wavPath = "C:\\path\\to\\sound.wav";
+      await expect(notifier.notify({ sound: wavPath })).rejects.toThrow(
+        "Spawn failed",
+      );
+    });
+
+    test("should use Node fallback for unknown extensions", async () => {
+      const unknownPath = "C:\\path\\to\\sound.unknown";
+      await notifier.notify({ sound: unknownPath });
+
+      expect(mockPlay).toHaveBeenCalledWith(unknownPath, expect.any(Function));
+    });
+
+    test("should reject if Node player fails", async () => {
+      mockPlay.mockImplementation(
+        (file: string, optsOrCb: any, cb?: (err?: any) => void) => {
+          let callback = cb;
+          if (typeof optsOrCb === "function") {
+            callback = optsOrCb;
+          }
+          if (callback) callback(new Error("Player error"));
+        },
+      );
+
+      const mp3Path = "C:\\path\\to\\sound.mp3";
+      await expect(notifier.notify({ sound: mp3Path })).rejects.toThrow(
+        "Player error",
+      );
+    });
+
     test("--test flag should use default asset", async () => {
       await notifier.notify({ test: true });
       expect(mockPlay).toHaveBeenCalledWith(

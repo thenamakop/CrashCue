@@ -18,9 +18,12 @@ console.log('CrashCue: Detecting Git Bash environment...');
 const nativeScriptPath = path.resolve(__dirname, 'native-windows.ps1');
 const soundPath = path.resolve(__dirname, '../../assets/faahhhhhh.wav');
 
-// Escape spaces in paths for bash
-const escapedScriptPath = nativeScriptPath.replace(/ /g, '\\ ');
-const escapedSoundPath = soundPath.replace(/ /g, '\\ ');
+// Escape for Git Bash:
+// - Use forward slashes (works with PowerShell and avoids Bash escaping issues)
+// - Wrap in double quotes in the script, so spaces are handled there.
+// We don't need to escape spaces if we quote the path properly.
+const escapedScriptPath = nativeScriptPath.split(path.sep).join('/');
+const escapedSoundPath = soundPath.split(path.sep).join('/');
 
 // 4. Construct Injection Block
 const startMarker = '# <crashcue-start>';

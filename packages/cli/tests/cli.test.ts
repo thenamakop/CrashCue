@@ -115,6 +115,12 @@ describe("CrashCue CLI (Windows-Safe)", () => {
     });
 
     test("should handle spawn error gracefully", async () => {
+      mockConf.get.mockReturnValue(false); // Ensure muted is false
+
+      // Create a fresh mock for notify to ensure we're tracking the right function
+      const notifyMock = jest.fn().mockResolvedValue(undefined);
+      mockNotifier.notify = notifyMock;
+
       mockSpawn.mockReturnValue({
         on: jest.fn((event, cb) => {
           if (event === "error") cb(new Error("Spawn error"));
@@ -129,7 +135,7 @@ describe("CrashCue CLI (Windows-Safe)", () => {
       const exitCode = await cli.run(["fail-cmd"]);
       expect(exitCode).toBe(1);
       // Error event triggers notify
-      expect(mockNotifier.notify).toHaveBeenCalled();
+      expect(notifyMock).toHaveBeenCalled();
     });
   });
 

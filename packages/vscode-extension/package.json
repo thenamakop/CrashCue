@@ -1,0 +1,21 @@
+{
+  "name": "crashcue-vscode",
+  "displayName": "CrashCue",
+  "description": "Audible feedback for failed terminal commands",
+  "version": "1.0.0",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "main": "./dist/extension.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@crashcue/cli": "file:../cli"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.80.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}

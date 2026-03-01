@@ -22,5 +22,6 @@ module.exports = {
     "^@crashcue/notifier$": "<rootDir>/packages/notifier/src/index.ts",
     "^@crashcue/shared-config$":
       "<rootDir>/packages/shared-config/src/index.ts",
+    "^vscode$": "<rootDir>/packages/vscode-extension/__mocks__/vscode.ts",
   },
 };

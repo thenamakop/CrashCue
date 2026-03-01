@@ -58,9 +58,11 @@ export class CLI {
         if (notifyOnFailure && exitCode !== 0) {
           // Play sound
           const sound = this.config.get("sound");
-          this.notifier.notify({ sound: sound || undefined }).catch((err) => {
-            console.error("CrashCue error:", err);
-          });
+          this.notifier
+            .notify({ sound: sound || undefined })
+            .catch((err: unknown) => {
+              console.error("CrashCue error:", err);
+            });
         }
 
         resolve(exitCode);

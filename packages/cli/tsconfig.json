@@ -8,5 +8,9 @@
   },
   "include": ["src"],
   "exclude": ["dist", "node_modules"],
-  "references": [{ "path": "../cli" }]
+  "references": [
+    { "path": "../notifier" },
+    { "path": "../shared-config" },
+    { "path": "../shared-assets" }
+  ]
 }

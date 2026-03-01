@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "test": "jest",
-    "build": "tsc"
+    "build": "tsc -b"
   },
   "repository": {
     "type": "git",

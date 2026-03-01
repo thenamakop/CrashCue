@@ -1,20 +1,11 @@
 {
-  "compilerOptions": {
-    "target": "ES2020",
-    "module": "commonjs",
-    "outDir": "./dist",
-    "rootDir": "./",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true,
-    "paths": {
-      "@crashcue/shared-assets": ["./packages/shared-assets/src/index.ts"],
-      "@crashcue/notifier": ["./packages/notifier/src/index.ts"],
-      "@crashcue/shared-config": ["./packages/shared-config/src/index.ts"]
-    }
-  },
-  "include": ["src/**/*", "tests/**/*", "packages/**/*", "scripts/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "extends": "./tsconfig.base.json",
+  "files": [],
+  "references": [
+    { "path": "./packages/shared-assets" },
+    { "path": "./packages/shared-config" },
+    { "path": "./packages/notifier" },
+    { "path": "./packages/cli" },
+    { "path": "./packages/vscode-extension" }
+  ]
 }

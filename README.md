@@ -1,3 +1,4 @@
+![CrashCue – Make your terminal scream](assets/CrashCue_Banner_img.png)
 # 🚨 CrashCue
 
 ### *When your code crashes, you hear it.*

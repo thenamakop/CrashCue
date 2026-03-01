@@ -1,0 +1,30 @@
+{
+  "name": "crashcue",
+  "version": "1.0.0",
+  "description": "![CrashCue – Make your terminal scream](assets/CrashCue_Banner_img.png) # 🚨 CrashCue",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "build": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thenamakop/CrashCue.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/thenamakop/CrashCue/issues"
+  },
+  "homepage": "https://github.com/thenamakop/CrashCue#readme",
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/node": "^25.3.3",
+    "jest": "^30.2.0",
+    "ts-jest": "^29.4.6",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}

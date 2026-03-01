@@ -56,7 +56,7 @@ describe("Shell Installer", () => {
     await ShellInstaller.installPowerShell();
     let content = fs.readFileSync(MOCK_PS_PROFILE, "utf8");
     expect(content).toContain("# <crashcue-start>");
-    expect(content).toContain("CrashCue-CheckExitCode");
+    expect(content).toContain("Register-EngineEvent");
 
     // Install again
     await ShellInstaller.installPowerShell();
@@ -73,6 +73,6 @@ describe("Shell Installer", () => {
 
     const content = fs.readFileSync(MOCK_PS_PROFILE, "utf8");
     expect(content).not.toContain("# <crashcue-start>");
-    expect(content).not.toContain("CrashCue-CheckExitCode");
+    expect(content).not.toContain("Register-EngineEvent");
   });
 });

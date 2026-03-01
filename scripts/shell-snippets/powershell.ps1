@@ -1,39 +1,37 @@
+
 # CrashCue PowerShell Integration
-$Global:CrashCue_LastExitCode = 0
+# This script registers an idle event handler to check for non-zero exit codes.
+# It plays a sound using the CrashCue notifier when a command fails.
 
-function Global:CrashCue-CheckExitCode {
-    $currentExitCode = $LASTEXITCODE
-    
-    # Check if the last command failed (non-zero exit code)
-    if ($currentExitCode -ne 0 -and $currentExitCode -ne $Global:CrashCue_LastExitCode) {
-        # Check if crashcue is available
-        if (Get-Command crashcue -ErrorAction SilentlyContinue) {
-            # Run crashcue notify with the current exit code context if needed, 
-            # or just trigger it. The notifier itself doesn't need the code, 
-            # it just plays the sound.
-            # We run it in background or detached if possible, but for now simple execution.
-            # Use Start-Process to avoid blocking? Or just direct call.
-            # Direct call is simpler.
-            crashcue run --command "previous_command_failed" --exitCode $currentExitCode
-        }
+$CrashCueNotifier = "{{NOTIFIER_PATH}}"
+
+if (Test-Path $CrashCueNotifier) {
+    # Initialize state tracking
+    if (-not (Get-Variable -Name "CrashCueLastExit" -Scope Global -ErrorAction SilentlyContinue)) {
+        $global:CrashCueLastExit = 0
     }
-    $Global:CrashCue_LastExitCode = $currentExitCode
-}
 
-# Hook into the prompt function
-# Save original prompt
-if (Test-Path function:prompt) {
-    $Global:CrashCue_OriginalPrompt = Get-Content function:prompt
-} else {
-    $Global:CrashCue_OriginalPrompt = "{ 'PS ' + $(Get-Location) + '> ' }"
-}
+    # Remove existing subscriber to avoid duplicates on profile reload
+    Unregister-Event -SourceIdentifier CrashCueOnIdle -ErrorAction SilentlyContinue
 
-# Define new prompt
-function prompt {
-    # Check exit code first
-    CrashCue-CheckExitCode
-    
-    # Invoke original prompt logic
-    # This is a bit tricky in PS. Simplest way is to just run the original block.
-    Invoke-Expression $Global:CrashCue_OriginalPrompt
+    # Register the idle event
+    # We use -SupportEvent to hide it from standard Get-EventSubscriber (optional but cleaner)
+    # But for visibility/debugging, maybe standard is better.
+    # The prompt didn't specify, but "Must be reversible" suggests we should be able to remove it.
+    # We'll use a SourceIdentifier so we can target it.
+    Register-EngineEvent PowerShell.OnIdle -SourceIdentifier CrashCueOnIdle -Action {
+        # Check if the last command failed and we haven't handled it yet
+        if ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne $global:CrashCueLastExit) {
+            try {
+                # Invoke the notifier CLI directly with node
+                # We pipe to Out-Null to suppress output and prevent it from interfering with the shell
+                node $Event.MessageData | Out-Null
+            } catch {
+                # Silently fail if notifier crashes to not break the shell
+            }
+        }
+
+        # Update tracking variable
+        $global:CrashCueLastExit = $LASTEXITCODE
+    } -MessageData $CrashCueNotifier | Out-Null
 }

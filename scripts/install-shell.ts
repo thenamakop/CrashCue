@@ -42,7 +42,26 @@ export class ShellInstaller {
 
     this.backupProfile(profilePath);
 
-    const snippet = fs.readFileSync(POWERSHELL_SNIPPET_PATH, "utf8");
+    const snippetTemplate = fs.readFileSync(POWERSHELL_SNIPPET_PATH, "utf8");
+
+    // Resolve absolute path to notifier CLI
+    // Assuming this script is in scripts/ relative to root
+    // and notifier is in packages/notifier/dist/cli.js
+    const rootDir = path.resolve(__dirname, "..");
+    const notifierPath = path.join(
+      rootDir,
+      "packages",
+      "notifier",
+      "dist",
+      "cli.js",
+    );
+
+    // Escape backslashes for PowerShell string
+    // In PowerShell double-quoted strings, backslashes are literal, but we might want to be safe.
+    // However, Node's path.join uses backslashes on Windows.
+    // Let's use simple string replacement.
+    const snippet = snippetTemplate.replace("{{NOTIFIER_PATH}}", notifierPath);
+
     const startMarker = "# <crashcue-start>";
     const endMarker = "# <crashcue-end>";
     const wrappedSnippet = `\n${startMarker}\n${snippet}\n${endMarker}\n`;

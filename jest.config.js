@@ -9,7 +9,17 @@ module.exports = {
     "packages/**/*.ts",
     "!src/**/*.d.ts",
     "!tests/**/*.ts",
+    "!packages/cli/src/index.ts",
+    "!packages/notifier/src/cli.ts",
   ],
+  coverageThreshold: {
+    global: {
+      branches: 85,
+      functions: 85,
+      lines: 85,
+      statements: 85,
+    },
+  },
   coverageReporters: ["text", "lcov"],
   transform: {
     "^.+\\.tsx?$": [

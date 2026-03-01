@@ -137,6 +137,86 @@ describe("CrashCue CLI (Windows-Safe)", () => {
       // Error event triggers notify
       expect(notifyMock).toHaveBeenCalled();
     });
+
+    test("should handle rapid repeated failures", async () => {
+      // Simulate rapid failures
+      const promises = [];
+
+      mockSpawn.mockReturnValue({
+        on: jest.fn((event, cb) => {
+          if (event === "close") cb(1);
+        }),
+        stdout: { on: jest.fn() },
+        stderr: { on: jest.fn() },
+        unref: jest.fn(),
+        kill: jest.fn(),
+      });
+
+      for (let i = 0; i < 5; i++) {
+        promises.push(cli.run(["false"]));
+      }
+
+      await Promise.all(promises);
+      expect(mockNotifier.notify).toHaveBeenCalledTimes(5);
+    });
+
+    test("should handle complex command strings on Windows", async () => {
+      const complexCmd = 'echo "hello world" && exit 1';
+      await cli.run([complexCmd]);
+      expect(mockSpawn).toHaveBeenCalledWith(
+        expect.stringContaining(complexCmd),
+        expect.objectContaining({ shell: true }),
+      );
+    });
+
+    test("should log error if notifier fails", async () => {
+      mockNotifier.notify.mockRejectedValue(new Error("Notify failed"));
+      const consoleSpy = jest
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+
+      mockSpawn.mockReturnValue({
+        on: jest.fn((event, cb) => {
+          if (event === "close") cb(1);
+        }),
+        stdout: { on: jest.fn() },
+        stderr: { on: jest.fn() },
+        unref: jest.fn(),
+        kill: jest.fn(),
+      });
+
+      await cli.run(["fail"]);
+
+      // Wait for promise resolution chain in the background
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        "CrashCue error:",
+        expect.any(Error),
+      );
+      consoleSpy.mockRestore();
+    });
+
+    test("should handle signal kill (null exit code)", async () => {
+      mockSpawn.mockReturnValue({
+        on: jest.fn((event, cb) => {
+          if (event === "close") cb(null);
+        }),
+        stdout: { on: jest.fn() },
+        stderr: { on: jest.fn() },
+        unref: jest.fn(),
+        kill: jest.fn(),
+      });
+
+      const exitCode = await cli.run(["kill-me"]);
+      expect(exitCode).toBe(1);
+    });
+
+    test("should handle undefined ignoreCommands config", async () => {
+      mockConf.get.mockReturnValue(undefined);
+      const exitCode = await cli.run(["echo", "hello"]);
+      expect(exitCode).toBe(0);
+    });
   });
 
   describe("mute/unmute commands", () => {

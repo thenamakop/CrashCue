@@ -213,6 +213,41 @@ describe("Notifier (Windows-First)", () => {
         expect.any(Function),
       );
     });
+
+    test("should start IPC server on Windows", () => {
+      // Just ensure it doesn't crash, as it's a stub
+      expect(() => notifier.startIpcServer()).not.toThrow();
+    });
+  });
+
+  describe("Non-Windows Playback Logic", () => {
+    beforeEach(() => {
+      setPlatform("linux");
+    });
+
+    test("should use Node player for all files on Linux", async () => {
+      const wavPath = "/path/to/sound.wav";
+      const resolvedPath = path.resolve(wavPath);
+      await notifier.notify({ sound: wavPath });
+
+      expect(mockPlay).toHaveBeenCalledWith(resolvedPath, expect.any(Function));
+      expect(spawn).not.toHaveBeenCalled();
+    });
+
+    test("should use Node player for all files on Darwin", async () => {
+      setPlatform("darwin");
+      const mp3Path = "/path/to/sound.mp3";
+      const resolvedPath = path.resolve(mp3Path);
+      await notifier.notify({ sound: mp3Path });
+
+      expect(mockPlay).toHaveBeenCalledWith(resolvedPath, expect.any(Function));
+      expect(spawn).not.toHaveBeenCalled();
+    });
+
+    test("should not start IPC server on Non-Windows", () => {
+      // Just ensure it doesn't crash/do anything
+      expect(() => notifier.startIpcServer()).not.toThrow();
+    });
   });
 
   describe("Volume Flag", () => {

@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { ExtensionController } from "../src/extension";
+import { ExtensionController, activate, deactivate } from "../src/extension";
 import { spawn } from "child_process";
 
 // Mock VSCode
@@ -123,5 +123,16 @@ describe("VSCode Extension", () => {
       expect.arrayContaining(["notify"]),
       expect.any(Object),
     );
+  });
+
+  test("should handle extension activation", () => {
+    activate(context);
+    // Check if listener was registered
+    expect(mockOnDidEndTaskProcess).toHaveBeenCalled();
+  });
+
+  test("should handle extension deactivation", () => {
+    // Just ensure it doesn't crash
+    expect(() => deactivate()).not.toThrow();
   });
 });

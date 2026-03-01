@@ -107,4 +107,14 @@ describe("Config Loader (Windows-Aware)", () => {
     const result = ConfigLoader.resolveSound(invalidPath);
     expect(result).toBe(DEFAULT_SOUND_PATH);
   });
+
+  test("should handle malformed JSON gracefully", () => {
+    jest.spyOn(fs, "existsSync").mockReturnValue(true);
+    // Mock malformed JSON
+    jest.spyOn(fs, "readFileSync").mockReturnValue("{ invalid json }");
+
+    // Should not throw and return empty config (or partial if merged)
+    const config = ConfigLoader.loadConfig();
+    expect(config).toEqual({});
+  });
 });

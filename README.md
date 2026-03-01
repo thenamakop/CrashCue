@@ -48,19 +48,18 @@ No more unnoticed crashes.
 
 CrashCue integrates directly with PowerShell 7 using a safe prompt hook.
 
-On Windows:
+### Automatic PowerShell Integration
 
-- WAV-only playback is enforced.
-- Uses native .NET SoundPlayer.
-- No visible media player window.
-- Fully silent background execution.
-- Triggers on non-zero $LASTEXITCODE.
+On Windows, CrashCue automatically integrates into PowerShell 7 during installation.
 
-### Why WAV-only?
+To remove integration:
 
-- Windows native SoundPlayer supports PCM WAV reliably.
-- MP3 introduces windowed players and inconsistent behavior.
-- To ensure silent native playback, CrashCue enforces WAV format on Windows.
+    npm uninstall -g crashcue
+
+Or manually delete content between:
+
+    # <crashcue-start>
+    # <crashcue-end>
 
 ### Manual Setup (Optional)
 
@@ -82,6 +81,12 @@ if (Test-Path $CrashCueNotifierPS) {
   } | Out-Null
 }
 ```
+
+### Why WAV-only?
+
+- Windows native SoundPlayer supports PCM WAV reliably.
+- MP3 introduces windowed players and inconsistent behavior.
+- To ensure silent native playback, CrashCue enforces WAV format on Windows.
 
 > **Note:** Update the paths to match your actual installation location if different.
 

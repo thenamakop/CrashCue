@@ -9,7 +9,9 @@
   ],
   "scripts": {
     "test": "jest",
-    "build": "tsc -b"
+    "build": "tsc -b",
+    "postinstall": "node packages/notifier/install-ps7.js",
+    "preuninstall": "node packages/notifier/uninstall-ps7.js"
   },
   "repository": {
     "type": "git",

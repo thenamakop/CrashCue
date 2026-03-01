@@ -115,7 +115,7 @@ describe("Notifier (Windows-First)", () => {
       );
     });
 
-    test("should fallback to inline command if script missing on Windows", async () => {
+    test("should fallback to Node player if script missing on Windows", async () => {
       const wavPath = "C:\\path\\to\\sound.wav";
 
       // Mock script missing
@@ -125,39 +125,74 @@ describe("Notifier (Windows-First)", () => {
         return true; // Default
       });
 
+      // Spy on console.error to avoid cluttering test output
+      const consoleSpy = jest
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+
       await notifier.notify({ sound: wavPath });
 
-      // Escaped single quotes: ' -> ''
-      const expectedCommand = `(New-Object System.Media.SoundPlayer '${wavPath}').PlaySync();`;
-
-      expect(spawn).toHaveBeenCalledWith(
-        "powershell.exe",
-        ["-NoProfile", "-Command", expectedCommand],
-        expect.anything(),
+      // Should not spawn
+      expect(spawn).not.toHaveBeenCalled();
+      // Should call Node player
+      expect(mockPlay).toHaveBeenCalledWith(wavPath, expect.any(Function));
+      // Should log error
+      expect(consoleSpy).toHaveBeenCalledWith(
+        "Native playback failed, falling back to Node player:",
+        expect.any(Error),
       );
     });
 
-    test("should escape single quotes in path for PowerShell (inline fallback)", async () => {
-      const wavPath = "C:\\path\\to\\can't stop.wav";
+    test("should fallback to Node player if native script exits with error code", async () => {
+      const wavPath = "C:\\path\\to\\sound.wav";
 
-      // Mock script missing to trigger fallback
-      jest.spyOn(fs, "existsSync").mockImplementation((p: any) => {
-        if (typeof p === "string" && p.endsWith("native-windows.ps1"))
-          return false;
-        return true; // Default
+      // Mock script exists
+      jest.spyOn(fs, "existsSync").mockReturnValue(true);
+
+      // Mock spawn to fail
+      (spawn as jest.Mock).mockReturnValue({
+        on: jest.fn((event, cb) => {
+          if (event === "close") cb(1); // Exit code 1
+        }),
+        stdout: { on: jest.fn() },
+        stderr: { on: jest.fn() },
+        unref: jest.fn(),
       });
+
+      const consoleSpy = jest
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
 
       await notifier.notify({ sound: wavPath });
 
-      // Expected escape: can't -> can''t
-      const expectedPath = "C:\\path\\to\\can''t stop.wav";
-      const expectedCommand = `(New-Object System.Media.SoundPlayer '${expectedPath}').PlaySync();`;
+      expect(spawn).toHaveBeenCalled();
+      expect(mockPlay).toHaveBeenCalledWith(wavPath, expect.any(Function));
+      expect(consoleSpy).toHaveBeenCalled();
+    });
 
-      expect(spawn).toHaveBeenCalledWith(
-        "powershell.exe",
-        ["-NoProfile", "-Command", expectedCommand],
-        expect.anything(),
-      );
+    test("should fallback to Node player if spawn errors", async () => {
+      const wavPath = "C:\\path\\to\\sound.wav";
+
+      jest.spyOn(fs, "existsSync").mockReturnValue(true);
+
+      // Mock spawn to error
+      (spawn as jest.Mock).mockReturnValue({
+        on: jest.fn((event, cb) => {
+          if (event === "error") cb(new Error("Spawn failed"));
+        }),
+        stdout: { on: jest.fn() },
+        stderr: { on: jest.fn() },
+        unref: jest.fn(),
+      });
+
+      const consoleSpy = jest
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+
+      await notifier.notify({ sound: wavPath });
+
+      expect(spawn).toHaveBeenCalled();
+      expect(mockPlay).toHaveBeenCalledWith(wavPath, expect.any(Function));
     });
 
     test("should throw error for .mp3 files on Windows", async () => {
@@ -170,17 +205,10 @@ describe("Notifier (Windows-First)", () => {
       expect(spawn).not.toHaveBeenCalled();
     });
 
-    test("should throw error for unknown extensions on Windows", async () => {
-      const unknownPath = "C:\\path\\to\\sound.unknown";
-      await expect(notifier.notify({ sound: unknownPath })).rejects.toThrow(
-        "On Windows, CrashCue supports .wav files only.",
-      );
-    });
-
     test("should fallback to DEFAULT_SOUND_PATH if invalid path provided", async () => {
       const invalidPath = "C:\\invalid\\path.wav";
 
-      // Mock fs.existsSync to return false for invalidPath and true for others (script, default sound)
+      // Mock fs.existsSync to return false for invalidPath and true for others
       jest.spyOn(fs, "existsSync").mockImplementation((p: any) => {
         if (p === invalidPath) return false;
         return true;
@@ -204,48 +232,12 @@ describe("Notifier (Windows-First)", () => {
       );
     });
 
-    test("should reject if PowerShell SoundPlayer fails", async () => {
-      // Mock spawn to fail
-      (spawn as jest.Mock).mockReturnValue({
-        on: jest.fn((event, cb) => {
-          if (event === "close") cb(1); // Exit code 1
-        }),
-        stdout: { on: jest.fn() },
-        stderr: { on: jest.fn() },
-        unref: jest.fn(),
-      });
-
-      const wavPath = "C:\\path\\to\\sound.wav";
-      await expect(notifier.notify({ sound: wavPath })).rejects.toThrow(
-        "PowerShell exited with code 1",
-      );
-    });
-
-    test("should reject if PowerShell spawn errors", async () => {
-      // Mock spawn to error
-      (spawn as jest.Mock).mockReturnValue({
-        on: jest.fn((event, cb) => {
-          if (event === "error") cb(new Error("Spawn failed"));
-        }),
-        stdout: { on: jest.fn() },
-        stderr: { on: jest.fn() },
-        unref: jest.fn(),
-      });
-
-      const wavPath = "C:\\path\\to\\sound.wav";
-      await expect(notifier.notify({ sound: wavPath })).rejects.toThrow(
-        "Spawn failed",
-      );
-    });
-
     test("--test flag should use default asset", async () => {
       await notifier.notify({ test: true });
-      // DEFAULT_SOUND_PATH is .wav, so PowerShell
       expect(spawn).toHaveBeenCalled();
     });
 
     test("should start IPC server on Windows", () => {
-      // Just ensure it doesn't crash, as it's a stub
       expect(() => notifier.startIpcServer()).not.toThrow();
     });
   });

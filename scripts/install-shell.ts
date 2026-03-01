@@ -44,23 +44,25 @@ export class ShellInstaller {
 
     const snippetTemplate = fs.readFileSync(POWERSHELL_SNIPPET_PATH, "utf8");
 
-    // Resolve absolute path to notifier CLI
-    // Assuming this script is in scripts/ relative to root
-    // and notifier is in packages/notifier/dist/cli.js
+    // Resolve absolute paths
     const rootDir = path.resolve(__dirname, "..");
-    const notifierPath = path.join(
+
+    // Path to native-windows.ps1
+    const nativeScriptPath = path.join(
       rootDir,
       "packages",
       "notifier",
-      "dist",
-      "cli.js",
+      "native-windows.ps1",
     );
 
-    // Escape backslashes for PowerShell string
-    // In PowerShell double-quoted strings, backslashes are literal, but we might want to be safe.
-    // However, Node's path.join uses backslashes on Windows.
-    // Let's use simple string replacement.
-    const snippet = snippetTemplate.replace("{{NOTIFIER_PATH}}", notifierPath);
+    // Path to sound asset
+    const soundPath = path.join(rootDir, "assets", "faahhhhhh.wav");
+
+    let snippet = snippetTemplate.replace(
+      "{{NATIVE_SCRIPT_PATH}}",
+      nativeScriptPath,
+    );
+    snippet = snippet.replace("{{SOUND_PATH}}", soundPath);
 
     const startMarker = "# <crashcue-start>";
     const endMarker = "# <crashcue-end>";

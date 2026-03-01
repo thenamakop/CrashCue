@@ -40,7 +40,15 @@ export class Notifier extends EventEmitter {
       if (!soundPath.toLowerCase().endsWith(".wav")) {
         throw new Error("On Windows, CrashCue supports .wav files only.");
       }
-      await this.playWavWindows(soundPath);
+      try {
+        await this.playWavWindows(soundPath);
+      } catch (err) {
+        console.error(
+          "Native playback failed, falling back to Node player:",
+          err,
+        );
+        await this.playNodeFallback(soundPath);
+      }
     } else {
       // Non-Windows (Darwin, Linux) - use Node player (which wraps afplay, aplay, etc.)
       await this.playNodeFallback(soundPath);
@@ -50,24 +58,20 @@ export class Notifier extends EventEmitter {
   private playWavWindows(filePath: string): Promise<void> {
     return new Promise((resolve, reject) => {
       const scriptPath = path.resolve(__dirname, "../native-windows.ps1");
-      let spawnArgs: string[];
 
-      if (fs.existsSync(scriptPath)) {
-        spawnArgs = [
-          "-NoProfile",
-          "-ExecutionPolicy",
-          "Bypass",
-          "-File",
-          scriptPath,
-          "-Path",
-          filePath,
-        ];
-      } else {
-        // Fallback to inline command
-        const escapedPath = filePath.replace(/'/g, "''");
-        const psCommand = `(New-Object System.Media.SoundPlayer '${escapedPath}').PlaySync();`;
-        spawnArgs = ["-NoProfile", "-Command", psCommand];
+      if (!fs.existsSync(scriptPath)) {
+        return reject(new Error("Native PowerShell script missing"));
       }
+
+      const spawnArgs = [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        scriptPath,
+        "-Path",
+        filePath,
+      ];
 
       const child = spawn("powershell.exe", spawnArgs, {
         windowsHide: true,

@@ -49,21 +49,30 @@ export class Notifier extends EventEmitter {
 
   private playWavWindows(filePath: string): Promise<void> {
     return new Promise((resolve, reject) => {
-      // Escape single quotes for PowerShell string
-      const escapedPath = filePath.replace(/'/g, "''");
+      const scriptPath = path.resolve(__dirname, "../native-windows.ps1");
+      let spawnArgs: string[];
 
-      // PowerShell command to play system sound
-      // (New-Object System.Media.SoundPlayer 'path').PlaySync()
-      const psCommand = `(New-Object System.Media.SoundPlayer '${escapedPath}').PlaySync();`;
+      if (fs.existsSync(scriptPath)) {
+        spawnArgs = [
+          "-NoProfile",
+          "-ExecutionPolicy",
+          "Bypass",
+          "-File",
+          scriptPath,
+          "-Path",
+          filePath,
+        ];
+      } else {
+        // Fallback to inline command
+        const escapedPath = filePath.replace(/'/g, "''");
+        const psCommand = `(New-Object System.Media.SoundPlayer '${escapedPath}').PlaySync();`;
+        spawnArgs = ["-NoProfile", "-Command", psCommand];
+      }
 
-      const child = spawn(
-        "powershell.exe",
-        ["-NoProfile", "-Command", psCommand],
-        {
-          windowsHide: true,
-          stdio: "ignore",
-        },
-      );
+      const child = spawn("powershell.exe", spawnArgs, {
+        windowsHide: true,
+        stdio: "ignore",
+      });
 
       child.on("close", (code) => {
         if (code === 0) {

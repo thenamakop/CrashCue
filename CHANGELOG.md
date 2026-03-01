@@ -9,6 +9,9 @@
 - Replaced Windows Media Player invocation with native SoundPlayer
 - Playback now silent and windowless on Windows
 - Default asset changed to `.wav` for cross-platform consistency
+- Added native PowerShell playback script `native-windows.ps1`
+- Updated CLI to prefer native PowerShell execution for `.wav` files on Windows
+- Added manual profile integration guidance for zero-overhead monitoring
 
 ### Added
 

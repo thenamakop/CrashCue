@@ -85,17 +85,29 @@ describe("Notifier (Windows-First)", () => {
       setPlatform("win32");
     });
 
-    test("should use PowerShell SoundPlayer for .wav files on Windows", async () => {
+    test("should use native-windows.ps1 script if available on Windows", async () => {
       const wavPath = "C:\\path\\to\\sound.wav";
-      await notifier.notify({ sound: wavPath });
 
-      // Escaped single quotes: ' -> ''
-      // Our test path has no quotes, so it's just the path
-      const expectedCommand = `(New-Object System.Media.SoundPlayer '${wavPath}').PlaySync();`;
+      // Mock script existence
+      jest.spyOn(fs, "existsSync").mockImplementation((p: any) => {
+        if (typeof p === "string" && p.endsWith("native-windows.ps1"))
+          return true;
+        return true; // Default
+      });
+
+      await notifier.notify({ sound: wavPath });
 
       expect(spawn).toHaveBeenCalledWith(
         "powershell.exe",
-        ["-NoProfile", "-Command", expectedCommand],
+        expect.arrayContaining([
+          "-NoProfile",
+          "-ExecutionPolicy",
+          "Bypass",
+          "-File",
+          expect.stringContaining("native-windows.ps1"),
+          "-Path",
+          wavPath,
+        ]),
         expect.objectContaining({
           windowsHide: true,
           stdio: "ignore",
@@ -103,8 +115,38 @@ describe("Notifier (Windows-First)", () => {
       );
     });
 
-    test("should escape single quotes in path for PowerShell", async () => {
+    test("should fallback to inline command if script missing on Windows", async () => {
+      const wavPath = "C:\\path\\to\\sound.wav";
+
+      // Mock script missing
+      jest.spyOn(fs, "existsSync").mockImplementation((p: any) => {
+        if (typeof p === "string" && p.endsWith("native-windows.ps1"))
+          return false;
+        return true; // Default
+      });
+
+      await notifier.notify({ sound: wavPath });
+
+      // Escaped single quotes: ' -> ''
+      const expectedCommand = `(New-Object System.Media.SoundPlayer '${wavPath}').PlaySync();`;
+
+      expect(spawn).toHaveBeenCalledWith(
+        "powershell.exe",
+        ["-NoProfile", "-Command", expectedCommand],
+        expect.anything(),
+      );
+    });
+
+    test("should escape single quotes in path for PowerShell (inline fallback)", async () => {
       const wavPath = "C:\\path\\to\\can't stop.wav";
+
+      // Mock script missing to trigger fallback
+      jest.spyOn(fs, "existsSync").mockImplementation((p: any) => {
+        if (typeof p === "string" && p.endsWith("native-windows.ps1"))
+          return false;
+        return true; // Default
+      });
+
       await notifier.notify({ sound: wavPath });
 
       // Expected escape: can't -> can''t
@@ -137,10 +179,11 @@ describe("Notifier (Windows-First)", () => {
 
     test("should fallback to DEFAULT_SOUND_PATH if invalid path provided", async () => {
       const invalidPath = "C:\\invalid\\path.wav";
-      // Mock fs.existsSync to return false for invalidPath and true for DEFAULT_SOUND_PATH
-      jest.spyOn(fs, "existsSync").mockImplementation((p) => {
+
+      // Mock fs.existsSync to return false for invalidPath and true for others (script, default sound)
+      jest.spyOn(fs, "existsSync").mockImplementation((p: any) => {
         if (p === invalidPath) return false;
-        return true; // Assume others exist
+        return true;
       });
       jest.spyOn(fs, "statSync").mockImplementation((p) => {
         return { isFile: () => true } as fs.Stats;
@@ -148,13 +191,15 @@ describe("Notifier (Windows-First)", () => {
 
       await notifier.notify({ sound: invalidPath });
 
-      // Should play default sound
-      // DEFAULT_SOUND_PATH is now .wav, so it should use PowerShell
-      const expectedCommand = `(New-Object System.Media.SoundPlayer '${DEFAULT_SOUND_PATH.replace(/'/g, "''")}').PlaySync();`;
-
+      // Should play default sound using native script (happy path)
       expect(spawn).toHaveBeenCalledWith(
         "powershell.exe",
-        ["-NoProfile", "-Command", expectedCommand],
+        expect.arrayContaining([
+          "-File",
+          expect.stringContaining("native-windows.ps1"),
+          "-Path",
+          DEFAULT_SOUND_PATH,
+        ]),
         expect.anything(),
       );
     });

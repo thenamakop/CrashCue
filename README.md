@@ -58,9 +58,32 @@ On Windows, CrashCue uses native `.wav` playback via `System.Media.SoundPlayer`.
 
 ⚠️ **MP3 files are NOT supported on Windows** to ensure consistent, windowless behavior.
 
+### Native PowerShell Profile Integration (Recommended)
+
+To enable silent, native playback directly from your PowerShell profile without spawning Node processes for every command, add this snippet to your `$PROFILE`:
+
+```powershell
+# CrashCue native PowerShell integration (safe)
+$CrashCueNotifierPS = "C:\Users\mauli\Documents\Projects\CrashCue\packages\notifier\native-windows.ps1"
+if (Test-Path $CrashCueNotifierPS) {
+  $global:CrashCueLastExit = $null
+  Register-EngineEvent PowerShell.OnIdle -Action {
+    try {
+      if ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne $global:CrashCueLastExit) {
+        # call the native script silently using execution bypass
+        powershell.exe -NoProfile -ExecutionPolicy Bypass -File $CrashCueNotifierPS -Path "C:\Users\mauli\Documents\Projects\CrashCue\assets\faahhhhhh.wav" > $null 2>&1
+      }
+    } catch {}
+    $global:CrashCueLastExit = $LASTEXITCODE
+  } | Out-Null
+}
+```
+
+> **Note:** Update the paths to match your actual installation location if different.
+
 ---
 
-## �📦 Installation
+## � Installation
 
 ### Install globally
 

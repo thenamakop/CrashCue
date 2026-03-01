@@ -1,21 +1,26 @@
 import { CLI } from "../src/cli";
 import { Notifier } from "@crashcue/notifier";
-import { spawn } from "child_process";
+import { spawn, execSync } from "child_process";
 import Conf from "conf";
+import fs from "fs";
+import path from "path";
 
 // Hoist mocks to ensure they are available
 jest.mock("@crashcue/notifier");
 jest.mock("child_process");
 jest.mock("conf");
+jest.mock("fs");
 
 describe("CrashCue CLI (Windows-Safe)", () => {
   let cli: CLI;
   let mockNotifier: any;
   let mockSpawn: jest.Mock;
+  let mockExecSync: jest.Mock;
   let mockConf: any;
 
   beforeEach(() => {
-    // Implement mocks afresh for each test to handle resetMocks: true
+    jest.clearAllMocks();
+
     (Notifier as unknown as jest.Mock).mockImplementation(() => ({
       notify: jest.fn().mockResolvedValue(undefined),
     }));
@@ -30,13 +35,24 @@ describe("CrashCue CLI (Windows-Safe)", () => {
       kill: jest.fn(),
     });
 
+    (execSync as unknown as jest.Mock).mockImplementation((cmd: string) => {
+      if (cmd.includes("reg query")) return "AutoRun REG_SZ native-windows.ps1";
+      if (cmd.includes("pwsh")) return "C:\\mock\\profile.ps1";
+      return "";
+    });
+
     (Conf as unknown as jest.Mock).mockImplementation(() => ({
       get: jest.fn(),
       set: jest.fn(),
       delete: jest.fn(),
       clear: jest.fn(),
       store: {},
+      path: "C:\\mock\\config.json",
     }));
+
+    // Mock FS default behavior
+    (fs.existsSync as jest.Mock).mockReturnValue(true);
+    (fs.readFileSync as jest.Mock).mockReturnValue("<crashcue-start>");
 
     cli = new CLI();
 
@@ -44,6 +60,7 @@ describe("CrashCue CLI (Windows-Safe)", () => {
     mockNotifier = (cli as any).notifier;
     mockConf = (cli as any).config;
     mockSpawn = spawn as unknown as jest.Mock;
+    mockExecSync = execSync as unknown as jest.Mock;
   });
 
   describe("run command", () => {
@@ -75,8 +92,6 @@ describe("CrashCue CLI (Windows-Safe)", () => {
 
       const cmd = '"C:\\Program Files\\app.exe"';
       await cli.run([cmd]);
-      // On Windows, if we pass a quoted string as cmd, it stays quoted.
-      // And since cmdArgs is empty, no quoting map runs.
       expect(mockSpawn).toHaveBeenCalledWith(
         cmd,
         [],
@@ -109,7 +124,6 @@ describe("CrashCue CLI (Windows-Safe)", () => {
     test("should ignore commands in ignoreCommands list", async () => {
       mockConf.get.mockReturnValue(["git status"]);
 
-      // Even if it fails
       mockSpawn.mockReturnValue({
         on: jest.fn((event, cb) => {
           if (event === "close") cb(1);
@@ -138,15 +152,12 @@ describe("CrashCue CLI (Windows-Safe)", () => {
         kill: jest.fn(),
       });
 
-      // Should return exit code 1 on error and notify if notifyOnFailure is true (default in run)
       const exitCode = await cli.run(["fail-cmd"]);
       expect(exitCode).toBe(1);
-      // Error event triggers notify
       expect(mockNotifier.notify).toHaveBeenCalled();
     });
 
     test("should handle rapid repeated failures", async () => {
-      // Simulate rapid failures
       const promises = [];
 
       mockSpawn.mockReturnValue({
@@ -168,7 +179,6 @@ describe("CrashCue CLI (Windows-Safe)", () => {
     });
 
     test("should handle complex command strings on Windows", async () => {
-      // Mock process.platform
       Object.defineProperty(process, "platform", {
         value: "win32",
       });
@@ -200,7 +210,6 @@ describe("CrashCue CLI (Windows-Safe)", () => {
 
       await cli.run(["fail"]);
 
-      // Wait for promise resolution chain in the background
       await new Promise((resolve) => setTimeout(resolve, 50));
 
       expect(consoleSpy).toHaveBeenCalledWith(
@@ -275,6 +284,233 @@ describe("CrashCue CLI (Windows-Safe)", () => {
       expect(mockNotifier.notify).toHaveBeenCalledWith(
         expect.objectContaining({ test: true }),
       );
+    });
+  });
+
+  describe("Management Commands", () => {
+    test("install should run install-all-shells.js", async () => {
+      const consoleSpy = jest
+        .spyOn(console, "log")
+        .mockImplementation(() => {});
+      await cli.install();
+      expect(mockExecSync).toHaveBeenCalledWith(
+        expect.stringContaining("install-all-shells.js"),
+        expect.anything(),
+      );
+      consoleSpy.mockRestore();
+    });
+
+    test("install should abort if package not found", async () => {
+      jest.spyOn(cli as any, "getNotifierPackagePath").mockReturnValue("");
+      await cli.install();
+      expect(mockExecSync).not.toHaveBeenCalled();
+    });
+
+    test("install should handle failure gracefully", async () => {
+      const consoleSpy = jest
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      const logSpy = jest.spyOn(console, "log").mockImplementation(() => {});
+      mockExecSync.mockImplementationOnce(() => {
+        throw new Error("Install failed");
+      });
+      await cli.install();
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining("Installation failed"),
+      );
+      consoleSpy.mockRestore();
+      logSpy.mockRestore();
+    });
+
+    test("uninstall should run uninstall-all-shells.js", async () => {
+      const consoleSpy = jest
+        .spyOn(console, "log")
+        .mockImplementation(() => {});
+      await cli.uninstall();
+      expect(mockExecSync).toHaveBeenCalledWith(
+        expect.stringContaining("uninstall-all-shells.js"),
+        expect.anything(),
+      );
+      consoleSpy.mockRestore();
+    });
+
+    test("uninstall should abort if package not found", async () => {
+      jest.spyOn(cli as any, "getNotifierPackagePath").mockReturnValue("");
+      await cli.uninstall();
+      expect(mockExecSync).not.toHaveBeenCalled();
+    });
+
+    test("uninstall should handle failure gracefully", async () => {
+      const consoleSpy = jest
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      const logSpy = jest.spyOn(console, "log").mockImplementation(() => {});
+      mockExecSync.mockImplementationOnce(() => {
+        throw new Error("Uninstall failed");
+      });
+      await cli.uninstall();
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining("Uninstallation failed"),
+      );
+      consoleSpy.mockRestore();
+      logSpy.mockRestore();
+    });
+
+    test("status should display configuration and run doctor", async () => {
+      const consoleSpy = jest
+        .spyOn(console, "log")
+        .mockImplementation(() => {});
+      const doctorSpy = jest
+        .spyOn(cli, "doctor")
+        .mockImplementation(async () => {});
+
+      await cli.status();
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining("CrashCue Status"),
+      );
+      expect(doctorSpy).toHaveBeenCalled();
+
+      consoleSpy.mockRestore();
+    });
+
+    test("doctor should check integrations on Windows (Success path)", async () => {
+      Object.defineProperty(process, "platform", { value: "win32" });
+      const consoleSpy = jest
+        .spyOn(console, "log")
+        .mockImplementation(() => {});
+
+      // Mock sound config existence
+      mockConf.get.mockReturnValue("C:\\sound.wav");
+
+      await cli.doctor();
+
+      // Should check native script
+      expect(fs.existsSync).toHaveBeenCalledWith(
+        expect.stringContaining("native-windows.ps1"),
+      );
+
+      // Should check PS profile
+      expect(mockExecSync).toHaveBeenCalledWith(
+        expect.stringContaining("pwsh"),
+        expect.anything(),
+      );
+
+      // Should check CMD registry
+      expect(mockExecSync).toHaveBeenCalledWith(
+        expect.stringContaining("reg query"),
+        expect.anything(),
+      );
+
+      consoleSpy.mockRestore();
+    });
+
+    test("doctor should handle missing components (Failure path)", async () => {
+      Object.defineProperty(process, "platform", { value: "win32" });
+      const consoleSpy = jest
+        .spyOn(console, "log")
+        .mockImplementation(() => {});
+
+      // Mock missing components
+      (fs.existsSync as jest.Mock).mockReturnValue(false);
+      mockExecSync.mockImplementation((cmd) => {
+        if (cmd.includes("pwsh")) throw new Error("pwsh not found");
+        if (cmd.includes("reg query")) throw new Error("reg not found");
+        return "";
+      });
+
+      await cli.doctor();
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining("Native Windows Script MISSING"),
+      );
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining("PowerShell 7 not detected"),
+      );
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining("CMD AutoRun integration MISSING"),
+      );
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining("Git Bash .bashrc not found"),
+      );
+
+      consoleSpy.mockRestore();
+    });
+
+    test("doctor should skip native check if package not found", async () => {
+      Object.defineProperty(process, "platform", { value: "win32" });
+      const consoleSpy = jest
+        .spyOn(console, "log")
+        .mockImplementation(() => {});
+
+      jest.spyOn(cli as any, "getNotifierPackagePath").mockReturnValue("");
+
+      await cli.doctor();
+
+      expect(consoleSpy).not.toHaveBeenCalledWith(
+        expect.stringContaining("Native Windows Script"),
+      );
+
+      consoleSpy.mockRestore();
+    });
+
+    test("doctor should report missing profile content", async () => {
+      Object.defineProperty(process, "platform", { value: "win32" });
+      const consoleSpy = jest
+        .spyOn(console, "log")
+        .mockImplementation(() => {});
+
+      (fs.existsSync as jest.Mock).mockReturnValue(true);
+      // Profile exists but empty
+      (fs.readFileSync as jest.Mock).mockReturnValue("");
+
+      await cli.doctor();
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining("PowerShell 7 Profile integration MISSING"),
+      );
+
+      consoleSpy.mockRestore();
+    });
+
+    test("doctor should handle exceptions in checks", async () => {
+      Object.defineProperty(process, "platform", { value: "win32" });
+      const consoleSpy = jest
+        .spyOn(console, "log")
+        .mockImplementation(() => {});
+
+      // Force FS error for Git Bash check
+      (fs.existsSync as jest.Mock).mockImplementation((p) => {
+        if (typeof p === "string" && p.includes(".bashrc")) {
+          throw new Error("FS Error");
+        }
+        return true;
+      });
+
+      await cli.doctor();
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining("Git Bash check failed"),
+      );
+
+      consoleSpy.mockRestore();
+    });
+
+    test("doctor should handle package resolution failure", async () => {
+      Object.defineProperty(process, "platform", { value: "win32" });
+      const consoleSpy = jest
+        .spyOn(console, "log")
+        .mockImplementation(() => {});
+      const errorSpy = jest
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+
+      jest.spyOn(cli as any, "getNotifierPackagePath").mockReturnValue("");
+
+      await cli.doctor();
+
+      consoleSpy.mockRestore();
+      errorSpy.mockRestore();
     });
   });
 });

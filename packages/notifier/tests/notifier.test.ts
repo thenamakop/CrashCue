@@ -237,6 +237,15 @@ describe("Notifier (Windows-First)", () => {
       expect(spawn).toHaveBeenCalled();
     });
 
+    test("should use default sound when no options provided", async () => {
+      await notifier.notify();
+      expect(spawn).toHaveBeenCalledWith(
+        "powershell.exe",
+        expect.arrayContaining([DEFAULT_SOUND_PATH]),
+        expect.anything(),
+      );
+    });
+
     test("should start IPC server on Windows", () => {
       expect(() => notifier.startIpcServer()).not.toThrow();
     });

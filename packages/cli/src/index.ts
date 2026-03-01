@@ -42,6 +42,18 @@ yargs(hideBin(process.argv))
   .command("unmute", "Unmute notifications", {}, async () => {
     await cli.unmute();
   })
+  .command("doctor", "Check CrashCue status and integrations", {}, async () => {
+    await cli.doctor();
+  })
+  .command("install", "Install shell integrations", {}, async () => {
+    await cli.install();
+  })
+  .command("uninstall", "Uninstall shell integrations", {}, async () => {
+    await cli.uninstall();
+  })
+  .command("status", "Show current configuration and status", {}, async () => {
+    await cli.status();
+  })
   .command("config", "Manage configuration", (yargs) => {
     yargs.command(
       "set-sound <path>",

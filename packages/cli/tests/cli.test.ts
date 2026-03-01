@@ -3,47 +3,24 @@ import { Notifier } from "@crashcue/notifier";
 import { spawn } from "child_process";
 import Conf from "conf";
 
-// Mock Notifier
-jest.mock("@crashcue/notifier", () => {
-  return {
-    Notifier: jest.fn().mockImplementation(() => {
-      return {
-        notify: jest.fn().mockResolvedValue(undefined),
-      };
-    }),
-  };
-});
-
-// Mock spawn
-jest.mock("child_process", () => ({
-  spawn: jest.fn(),
-}));
-
-// Mock Conf
-const mockConf = {
-  get: jest.fn(),
-  set: jest.fn(),
-  delete: jest.fn(),
-  clear: jest.fn(),
-  store: {},
-};
-
-jest.mock("conf", () => {
-  return jest.fn().mockImplementation(() => mockConf);
-});
+// Hoist mocks to ensure they are available
+jest.mock("@crashcue/notifier");
+jest.mock("child_process");
+jest.mock("conf");
 
 describe("CrashCue CLI (Windows-Safe)", () => {
   let cli: CLI;
   let mockNotifier: any;
   let mockSpawn: jest.Mock;
+  let mockConf: any;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    mockNotifier = new Notifier();
-    mockSpawn = spawn as jest.Mock;
+    // Implement mocks afresh for each test to handle resetMocks: true
+    (Notifier as unknown as jest.Mock).mockImplementation(() => ({
+      notify: jest.fn().mockResolvedValue(undefined),
+    }));
 
-    // Default spawn behavior: success
-    mockSpawn.mockReturnValue({
+    (spawn as unknown as jest.Mock).mockReturnValue({
       on: jest.fn((event, cb) => {
         if (event === "close") cb(0);
       }),
@@ -53,12 +30,20 @@ describe("CrashCue CLI (Windows-Safe)", () => {
       kill: jest.fn(),
     });
 
-    // Ensure mockNotifier.notify returns a promise that resolves
-    mockNotifier.notify = jest.fn().mockResolvedValue(undefined);
+    (Conf as unknown as jest.Mock).mockImplementation(() => ({
+      get: jest.fn(),
+      set: jest.fn(),
+      delete: jest.fn(),
+      clear: jest.fn(),
+      store: {},
+    }));
 
     cli = new CLI();
-    // Inject the mocked notifier
-    (cli as any).notifier = mockNotifier;
+
+    // Access the mocked dependencies
+    mockNotifier = (cli as any).notifier;
+    mockConf = (cli as any).config;
+    mockSpawn = spawn as unknown as jest.Mock;
   });
 
   describe("run command", () => {
@@ -78,9 +63,6 @@ describe("CrashCue CLI (Windows-Safe)", () => {
         unref: jest.fn(),
         kill: jest.fn(),
       });
-
-      // Re-instantiate CLI to ensure config is fresh if needed, but mainly to reset spawn behavior
-      // However, config mocking is global.
 
       const exitCode = await cli.run(["false"]);
       expect(exitCode).toBe(2);
@@ -117,10 +99,6 @@ describe("CrashCue CLI (Windows-Safe)", () => {
     test("should handle spawn error gracefully", async () => {
       mockConf.get.mockReturnValue(false); // Ensure muted is false
 
-      // Create a fresh mock for notify to ensure we're tracking the right function
-      const notifyMock = jest.fn().mockResolvedValue(undefined);
-      mockNotifier.notify = notifyMock;
-
       mockSpawn.mockReturnValue({
         on: jest.fn((event, cb) => {
           if (event === "error") cb(new Error("Spawn error"));
@@ -135,7 +113,7 @@ describe("CrashCue CLI (Windows-Safe)", () => {
       const exitCode = await cli.run(["fail-cmd"]);
       expect(exitCode).toBe(1);
       // Error event triggers notify
-      expect(notifyMock).toHaveBeenCalled();
+      expect(mockNotifier.notify).toHaveBeenCalled();
     });
 
     test("should handle rapid repeated failures", async () => {

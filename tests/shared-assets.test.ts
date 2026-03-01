@@ -9,7 +9,7 @@ describe("Shared Assets Module", () => {
   test("DEFAULT_SOUND_PATH should resolve to an existing file", () => {
     expect(fs.existsSync(DEFAULT_SOUND_PATH)).toBe(true);
     expect(fs.statSync(DEFAULT_SOUND_PATH).isFile()).toBe(true);
-    expect(path.extname(DEFAULT_SOUND_PATH)).toBe(".mp3");
+    expect(path.extname(DEFAULT_SOUND_PATH)).toBe(".wav");
   });
 
   test("resolveSoundPath should return DEFAULT_SOUND_PATH when no custom path provided", () => {

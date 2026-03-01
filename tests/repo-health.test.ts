@@ -4,17 +4,17 @@ import path from "path";
 describe("Repo Health Check", () => {
   const rootDir = path.resolve(__dirname, "..");
   const assetsDir = path.join(rootDir, "assets");
-  const mp3Path = path.join(assetsDir, "faahhhhhh.mp3");
+  const mp3Path = path.join(assetsDir, "faahhhhhh.wav");
 
-  test("assets/faahhhhhh.mp3 exists", () => {
+  test("assets/faahhhhhh.wav exists", () => {
     expect(fs.existsSync(mp3Path)).toBe(true);
   });
 
-  test("assets/faahhhhhh.mp3 is readable", () => {
+  test("assets/faahhhhhh.wav is readable", () => {
     expect(() => fs.accessSync(mp3Path, fs.constants.R_OK)).not.toThrow();
   });
 
-  test("assets/faahhhhhh.mp3 size > 0", () => {
+  test("assets/faahhhhhh.wav size > 0", () => {
     const stats = fs.statSync(mp3Path);
     expect(stats.size).toBeGreaterThan(0);
   });

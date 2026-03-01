@@ -47,22 +47,42 @@ export class CLI {
     return new Promise((resolve) => {
       // Windows-safe execution: spawn needs to run in a shell for complex commands or simple executables sometimes
       // { shell: true } is generally safer for "running a command string" behavior on Windows
-      const child = spawn(args.join(" "), {
+      const [cmd, ...cmdArgs] = args;
+
+      const quote = (arg: string): string => {
+        if (process.platform === "win32") {
+          // Windows cmd.exe quoting
+          if (arg === "") return '""';
+          // Escape double quotes
+          let escaped = arg.replace(/"/g, '\\"');
+          return `"${escaped}"`;
+        } else {
+          // Unix sh quoting
+          if (arg === "") return "''";
+          // Escape single quotes
+          return `'${arg.replace(/'/g, "'\\''")}'`;
+        }
+      };
+
+      // We must quote arguments because shell: true means they are joined into a command string
+      const quotedArgs = cmdArgs.map(quote);
+
+      const child = spawn(cmd, quotedArgs, {
         shell: true,
         stdio: "inherit",
       });
 
-      child.on("close", (code) => {
+      child.on("close", async (code) => {
         const exitCode = code === null ? 1 : code;
 
         if (notifyOnFailure && exitCode !== 0) {
           // Play sound
           const sound = this.config.get("sound");
-          this.notifier
-            .notify({ sound: sound || undefined })
-            .catch((err: unknown) => {
-              console.error("CrashCue error:", err);
-            });
+          try {
+            await this.notifier.notify({ sound: sound || undefined });
+          } catch (err: unknown) {
+            console.error("CrashCue error:", err);
+          }
         }
 
         resolve(exitCode);

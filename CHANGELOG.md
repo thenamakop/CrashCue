@@ -2,6 +2,14 @@
 
 ## v0.1.0 — 2026-03-01
 
+### Changed
+
+- Windows audio playback now exclusively supports `.wav` files
+- Removed Windows MP3 playback logic
+- Replaced Windows Media Player invocation with native SoundPlayer
+- Playback now silent and windowless on Windows
+- Default asset changed to `.wav` for cross-platform consistency
+
 ### Added
 
 - Windows-aware audio playback (.wav native, .mp3 fallback)

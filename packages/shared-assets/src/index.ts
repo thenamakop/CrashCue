@@ -29,7 +29,7 @@ const getProjectRoot = (): string => {
 export const DEFAULT_SOUND_PATH = path.resolve(
   getProjectRoot(),
   "assets",
-  "faahhhhhh.mp3",
+  "faahhhhhh.wav",
 );
 
 /**

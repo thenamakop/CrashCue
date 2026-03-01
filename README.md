@@ -1,12 +1,13 @@
 ![CrashCue – Make your terminal scream](assets/CrashCue_Banner_img.png)
+
 # 🚨 CrashCue
 
-### *When your code crashes, you hear it.*
+### _When your code crashes, you hear it._
 
 > Silent failures are productivity killers. CrashCue makes sure you
 > never miss one.
 
-------------------------------------------------------------------------
+---
 
 ## ⚡ What is CrashCue?
 
@@ -15,69 +16,87 @@ a sound whenever a terminal command fails.
 
 Whether you're working in:
 
--   🖥 macOS Terminal\
--   🐧 Linux Shell\
--   🪟 Windows PowerShell\
--   🧠 VSCode integrated terminal\
--   💻 Any modern IDE terminal
+- 🖥 macOS Terminal\
+- 🐧 Linux Shell\
+- 🪟 Windows PowerShell\
+- 🧠 VSCode integrated terminal\
+- 💻 Any modern IDE terminal
 
 CrashCue instantly alerts you when a command exits with an error.
 
 No more silent build failures.\
 No more unnoticed crashes.
 
-------------------------------------------------------------------------
+---
 
 ## 🚀 Features
 
--   🔊 Plays sound on non-zero exit codes
--   🎛 Fully customizable audio (WAV / MP3 supported)
--   🌍 Works on macOS, Linux, Windows
--   🧠 VSCode extension support
--   ⚡ Ultra-lightweight CLI
--   🛠 Regex-based error detection mode
--   🚫 Ignore specific commands
--   🔕 Temporary mute support
--   🧪 Built-in test sound command
--   🔒 100% local --- no telemetry, no tracking
+- 🔊 Plays sound on non-zero exit codes
+- 🎛 Fully customizable audio (WAV supported on Windows, MP3/WAV on macOS/Linux)
+- 🌍 Works on macOS, Linux, Windows
+- 🧠 VSCode extension support
+- ⚡ Ultra-lightweight CLI
+- 🛠 Regex-based error detection mode
+- 🚫 Ignore specific commands
+- 🔕 Temporary mute support
+- 🧪 Built-in test sound command
+- 🔒 100% local --- no telemetry, no tracking
 
-------------------------------------------------------------------------
+---
 
-## 📦 Installation
+## � Windows Audio Format
+
+On Windows, CrashCue uses native `.wav` playback via `System.Media.SoundPlayer`.
+
+**Why WAV only?**
+
+- Silent playback
+- No media player windows
+- No background processes
+- Native .NET API
+- Reliable system-level execution
+
+⚠️ **MP3 files are NOT supported on Windows** to ensure consistent, windowless behavior.
+
+---
+
+## �📦 Installation
 
 ### Install globally
 
-``` bash
+```bash
 npm install -g crashcue
 ```
 
 ### Enable in your shell
 
-``` bash
+```bash
 crashcue install-shell
 ```
 
 Test it:
 
-``` bash
+```bash
 false
 ```
 
 You should hear the default crash sound 🔊
 
-------------------------------------------------------------------------
+---
 
 ## 🧪 Quick Commands
 
-  Command                    Description
-  -------------------------- -----------------------------------
-  `crashcue test`            Play test sound
-  `crashcue run <command>`   Run command and notify on failure
-  `crashcue mute`            Temporarily disable sounds
-  `crashcue unmute`          Re-enable sounds
-  `crashcue config`          Open config file
+Command Description
 
-------------------------------------------------------------------------
+---
+
+`crashcue test` Play test sound
+`crashcue run <command>` Run command and notify on failure
+`crashcue mute` Temporarily disable sounds
+`crashcue unmute` Re-enable sounds
+`crashcue config` Open config file
+
+---
 
 ## ⚙️ Configuration
 
@@ -87,7 +106,7 @@ Global config location:
 
 ### Example configuration
 
-``` json
+```json
 {
   "enabled": true,
   "sound": "default",
@@ -99,33 +118,33 @@ Global config location:
 }
 ```
 
-------------------------------------------------------------------------
+---
 
 ## 🖥 Shell Support
 
 CrashCue integrates with:
 
--   Bash
--   Zsh
--   Fish
--   PowerShell
+- Bash
+- Zsh
+- Fish
+- PowerShell
 
 Install safely with:
 
-``` bash
+```bash
 crashcue install-shell
 ```
 
 Uninstall:
 
-``` bash
+```bash
 crashcue uninstall-shell
 ```
 
 CrashCue automatically backs up your shell profile before making
 changes.
 
-------------------------------------------------------------------------
+---
 
 ## 🧠 VSCode Extension
 
@@ -135,26 +154,26 @@ Search for:
 
 Extension features:
 
--   Detects failed tasks
--   Regex-based detection
--   Workspace-level configuration
--   One-click test sound
--   Quick mute toggle
+- Detects failed tasks
+- Regex-based detection
+- Workspace-level configuration
+- One-click test sound
+- Quick mute toggle
 
-------------------------------------------------------------------------
+---
 
 ## 🔐 Privacy First
 
 CrashCue is fully local.
 
--   No analytics\
--   No external API calls\
--   No telemetry\
--   No background tracking
+- No analytics\
+- No external API calls\
+- No telemetry\
+- No background tracking
 
 Your errors stay on your machine.
 
-------------------------------------------------------------------------
+---
 
 ## 🏗 Project Structure
 
@@ -168,18 +187,18 @@ Your errors stay on your machine.
     ├── tests/
     └── README.md
 
-------------------------------------------------------------------------
+---
 
 ## 🛣 Roadmap
 
--   Desktop notification support
--   Custom sound packs
--   Per-project config detection
--   TTS mode ("Your build failed.")
--   GUI configuration app
--   Community sound themes
+- Desktop notification support
+- Custom sound packs
+- Per-project config detection
+- TTS mode ("Your build failed.")
+- GUI configuration app
+- Community sound themes
 
-------------------------------------------------------------------------
+---
 
 ## 🤝 Contributing
 
@@ -192,23 +211,23 @@ project is for you.
 2.  Create a branch\
 3.  Submit a PR
 
-------------------------------------------------------------------------
+---
 
 ## 📄 License
 
 MIT License
 
-------------------------------------------------------------------------
+---
 
 ## ⭐ Support
 
 If CrashCue saves you from even one unnoticed failure:
 
--   ⭐ Star the repository\
--   🔁 Share it\
--   🧩 Add it to your dotfiles
+- ⭐ Star the repository\
+- 🔁 Share it\
+- 🧩 Add it to your dotfiles
 
-------------------------------------------------------------------------
+---
 
 ## 💬 Philosophy
 

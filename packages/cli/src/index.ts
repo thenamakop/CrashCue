@@ -12,11 +12,16 @@ yargs(hideBin(process.argv))
     "run [command..]",
     "Run a command and notify on failure",
     (yargs) => {
-      yargs.positional("command", {
-        describe: "Command to run",
-        type: "string",
-        array: true,
-      });
+      yargs
+        .positional("command", {
+          describe: "Command to run",
+          type: "string",
+          array: true,
+        })
+        .parserConfiguration({
+          "unknown-options-as-args": true,
+          "populate--": true,
+        });
     },
     async (argv) => {
       const commandParts = argv.command as string[];

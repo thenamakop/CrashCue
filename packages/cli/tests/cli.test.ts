@@ -70,9 +70,38 @@ describe("CrashCue CLI (Windows-Safe)", () => {
     });
 
     test("should support Windows paths with spaces in run", async () => {
-      await cli.run(['"C:\\Program Files\\app.exe"']);
+      // Mock win32 for this test to ensure win32 quoting if applicable
+      Object.defineProperty(process, "platform", { value: "win32" });
+
+      const cmd = '"C:\\Program Files\\app.exe"';
+      await cli.run([cmd]);
+      // On Windows, if we pass a quoted string as cmd, it stays quoted.
+      // And since cmdArgs is empty, no quoting map runs.
       expect(mockSpawn).toHaveBeenCalledWith(
-        expect.stringContaining("C:\\Program Files\\app.exe"),
+        cmd,
+        [],
+        expect.objectContaining({ shell: true }),
+      );
+    });
+
+    test("should quote arguments correctly on Windows", async () => {
+      Object.defineProperty(process, "platform", { value: "win32" });
+      const args = ["echo", "hello world", ""];
+      await cli.run(args);
+      expect(mockSpawn).toHaveBeenCalledWith(
+        "echo",
+        ['"hello world"', '""'],
+        expect.objectContaining({ shell: true }),
+      );
+    });
+
+    test("should quote arguments correctly on Unix", async () => {
+      Object.defineProperty(process, "platform", { value: "linux" });
+      const args = ["echo", "hello world", "don't", ""];
+      await cli.run(args);
+      expect(mockSpawn).toHaveBeenCalledWith(
+        "echo",
+        ["'hello world'", "'don'\\''t'", "''"],
         expect.objectContaining({ shell: true }),
       );
     });
@@ -139,10 +168,16 @@ describe("CrashCue CLI (Windows-Safe)", () => {
     });
 
     test("should handle complex command strings on Windows", async () => {
-      const complexCmd = 'echo "hello world" && exit 1';
-      await cli.run([complexCmd]);
+      // Mock process.platform
+      Object.defineProperty(process, "platform", {
+        value: "win32",
+      });
+
+      const complexCmd = ["node", "-e", 'console.log("hello world")'];
+      await cli.run(complexCmd);
       expect(mockSpawn).toHaveBeenCalledWith(
-        expect.stringContaining(complexCmd),
+        "node",
+        expect.arrayContaining(['"-e"', '"console.log(\\"hello world\\")"']),
         expect.objectContaining({ shell: true }),
       );
     });

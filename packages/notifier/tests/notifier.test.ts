@@ -89,40 +89,49 @@ describe("Notifier (Windows-First)", () => {
       const wavPath = "C:\\path\\to\\sound.wav";
       await notifier.notify({ sound: wavPath });
 
+      // Escaped single quotes: ' -> ''
+      // Our test path has no quotes, so it's just the path
+      const expectedCommand = `(New-Object System.Media.SoundPlayer '${wavPath}').PlaySync();`;
+
       expect(spawn).toHaveBeenCalledWith(
-        "powershell",
-        expect.arrayContaining([
-          "-c",
-          expect.stringContaining("System.Media.SoundPlayer"),
-          expect.stringContaining(wavPath.replace(/\\/g, "\\\\")), // Escaped backslashes
-        ]),
+        "powershell.exe",
+        ["-NoProfile", "-Command", expectedCommand],
+        expect.objectContaining({
+          windowsHide: true,
+          stdio: "ignore",
+        }),
+      );
+    });
+
+    test("should escape single quotes in path for PowerShell", async () => {
+      const wavPath = "C:\\path\\to\\can't stop.wav";
+      await notifier.notify({ sound: wavPath });
+
+      // Expected escape: can't -> can''t
+      const expectedPath = "C:\\path\\to\\can''t stop.wav";
+      const expectedCommand = `(New-Object System.Media.SoundPlayer '${expectedPath}').PlaySync();`;
+
+      expect(spawn).toHaveBeenCalledWith(
+        "powershell.exe",
+        ["-NoProfile", "-Command", expectedCommand],
         expect.anything(),
       );
     });
 
-    test("should use Node fallback (play-sound) for .mp3 files on Windows", async () => {
+    test("should throw error for .mp3 files on Windows", async () => {
       const mp3Path = "C:\\path\\to\\sound.mp3";
-      await notifier.notify({ sound: mp3Path });
-
-      expect(mockPlay).toHaveBeenCalledWith(mp3Path, expect.any(Function));
-      expect(spawn).not.toHaveBeenCalledWith(
-        "powershell",
-        expect.anything(),
-        expect.anything(),
+      await expect(notifier.notify({ sound: mp3Path })).rejects.toThrow(
+        "On Windows, CrashCue supports .wav files only.",
       );
+
+      expect(mockPlay).not.toHaveBeenCalled();
+      expect(spawn).not.toHaveBeenCalled();
     });
 
-    test("should handle paths with spaces correctly", async () => {
-      const spacePath = "C:\\path with spaces\\sound.wav";
-      await notifier.notify({ sound: spacePath });
-
-      expect(spawn).toHaveBeenCalledWith(
-        "powershell",
-        expect.arrayContaining([
-          "-c",
-          expect.stringContaining(`"${spacePath.replace(/\\/g, "\\\\")}"`), // Quotes and escaped
-        ]),
-        expect.anything(),
+    test("should throw error for unknown extensions on Windows", async () => {
+      const unknownPath = "C:\\path\\to\\sound.unknown";
+      await expect(notifier.notify({ sound: unknownPath })).rejects.toThrow(
+        "On Windows, CrashCue supports .wav files only.",
       );
     });
 
@@ -140,11 +149,13 @@ describe("Notifier (Windows-First)", () => {
       await notifier.notify({ sound: invalidPath });
 
       // Should play default sound
-      // Since default is .mp3, it should use play-sound on Windows (or whatever default is)
-      // DEFAULT_SOUND_PATH is .mp3
-      expect(mockPlay).toHaveBeenCalledWith(
-        DEFAULT_SOUND_PATH,
-        expect.any(Function),
+      // DEFAULT_SOUND_PATH is now .wav, so it should use PowerShell
+      const expectedCommand = `(New-Object System.Media.SoundPlayer '${DEFAULT_SOUND_PATH.replace(/'/g, "''")}').PlaySync();`;
+
+      expect(spawn).toHaveBeenCalledWith(
+        "powershell.exe",
+        ["-NoProfile", "-Command", expectedCommand],
+        expect.anything(),
       );
     });
 
@@ -182,36 +193,10 @@ describe("Notifier (Windows-First)", () => {
       );
     });
 
-    test("should use Node fallback for unknown extensions", async () => {
-      const unknownPath = "C:\\path\\to\\sound.unknown";
-      await notifier.notify({ sound: unknownPath });
-
-      expect(mockPlay).toHaveBeenCalledWith(unknownPath, expect.any(Function));
-    });
-
-    test("should reject if Node player fails", async () => {
-      mockPlay.mockImplementation(
-        (file: string, optsOrCb: any, cb?: (err?: any) => void) => {
-          let callback = cb;
-          if (typeof optsOrCb === "function") {
-            callback = optsOrCb;
-          }
-          if (callback) callback(new Error("Player error"));
-        },
-      );
-
-      const mp3Path = "C:\\path\\to\\sound.mp3";
-      await expect(notifier.notify({ sound: mp3Path })).rejects.toThrow(
-        "Player error",
-      );
-    });
-
     test("--test flag should use default asset", async () => {
       await notifier.notify({ test: true });
-      expect(mockPlay).toHaveBeenCalledWith(
-        DEFAULT_SOUND_PATH,
-        expect.any(Function),
-      );
+      // DEFAULT_SOUND_PATH is .wav, so PowerShell
+      expect(spawn).toHaveBeenCalled();
     });
 
     test("should start IPC server on Windows", () => {
@@ -234,6 +219,14 @@ describe("Notifier (Windows-First)", () => {
       expect(spawn).not.toHaveBeenCalled();
     });
 
+    test("should use Node player for .mp3 files on Linux", async () => {
+      const mp3Path = "/path/to/sound.mp3";
+      const resolvedPath = path.resolve(mp3Path);
+      await notifier.notify({ sound: mp3Path });
+
+      expect(mockPlay).toHaveBeenCalledWith(resolvedPath, expect.any(Function));
+    });
+
     test("should use Node player for all files on Darwin", async () => {
       setPlatform("darwin");
       const mp3Path = "/path/to/sound.mp3";
@@ -247,23 +240,6 @@ describe("Notifier (Windows-First)", () => {
     test("should not start IPC server on Non-Windows", () => {
       // Just ensure it doesn't crash/do anything
       expect(() => notifier.startIpcServer()).not.toThrow();
-    });
-  });
-
-  describe("Volume Flag", () => {
-    test("should parse volume flag", async () => {
-      // This is more of a CLI test, but we can check if notify options handle it.
-      // Since SoundPlayer might not support volume easily via CLI args without more complex PS,
-      // and play-sound depends on the player.
-      // For this requirement "Volume flag parsing", we ensure the option is passed.
-      // We'll verify it's passed to the player if supported or just ignored safely.
-      // For now, let's assume we pass it to play-sound options.
-      setPlatform("win32");
-      await notifier.notify({ sound: "test.mp3", volume: 0.5 });
-      // play-sound doesn't have a standard volume across all players, but let's check it receives options
-      // Actually, for .wav (PowerShell), setting volume is hard.
-      // The spec says "Volume flag parsing", so the CLI must parse it. Notifier might use it.
-      // Let's just ensure notify accepts it.
     });
   });
 });

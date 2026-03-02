@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "description": "![CrashCue – Make your terminal scream](assets/CrashCue_Banner_img.png) # 🚨 CrashCue",
   "main": "index.js",
+  "bin": {
+    "crashcue": "packages/cli/dist/index.js"
+  },
   "private": true,
   "workspaces": [
     "packages/*"

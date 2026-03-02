@@ -4,7 +4,6 @@ param(
 )
 
 try {
-  Add-Type -AssemblyName System.Media
   if (-not (Test-Path -Path $Path)) {
     exit 2
   }

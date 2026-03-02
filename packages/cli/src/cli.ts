@@ -1,5 +1,5 @@
 import { spawn, execSync } from "child_process";
-import { Notifier } from "../../notifier/dist/index.js";
+import { Notifier } from "../../notifier/src/index.ts";
 import Conf from "conf";
 import fs from "fs";
 import path from "path";
@@ -159,12 +159,31 @@ export class CLI {
   }
 
   private getNotifierPackagePath(): string {
-    try {
-      return path.dirname(require.resolve("../../notifier/package.json"));
-    } catch (e) {
-      console.error("Could not locate @crashcue/notifier package.");
-      return "";
+    // When bundled, __dirname is packages/cli/dist (or similar)
+    // We need to find packages/notifier relative to where we are running or installed
+
+    // In dev (monorepo): ../../notifier
+    let notifierPath = path.resolve(__dirname, "../../notifier");
+    if (fs.existsSync(path.join(notifierPath, "package.json"))) {
+      return notifierPath;
     }
+
+    // In prod (installed): we are in packages/cli/dist
+    // But wait, "files" includes packages/notifier/native-windows.ps1 directly mapped?
+    // "files": [ "packages/cli/dist", "packages/notifier/native-windows.ps1" ]
+    // This maps the structure 1:1 inside the tarball.
+
+    // So if __dirname is .../node_modules/crashcue/packages/cli/dist
+    // Then notifier script is at .../node_modules/crashcue/packages/notifier/native-windows.ps1
+
+    notifierPath = path.resolve(__dirname, "../../notifier");
+    // We check for the script directly now since package.json might not be there if excluded
+    if (fs.existsSync(path.join(notifierPath, "native-windows.ps1"))) {
+      return notifierPath;
+    }
+
+    console.error("Could not locate CrashCue notifier files.");
+    return "";
   }
 
   public async doctor(): Promise<void> {

@@ -1,6 +1,6 @@
 {
   "name": "crashcue",
-  "version": "0.1.1",
+  "version": "0.1.0",
   "description": "![CrashCue – Make your terminal scream](assets/CrashCue_Banner_img.png) # 🚨 CrashCue",
   "main": "packages/cli/dist/index.js",
   "bin": {
@@ -9,11 +9,6 @@
   "files": [
     "packages/cli/dist",
     "packages/notifier/native-windows.ps1",
-    "packages/notifier/install-all-shells.js",
-    "packages/notifier/uninstall-all-shells.js",
-    "packages/notifier/install-gitbash.js",
-    "packages/notifier/uninstall-gitbash.js",
-    "packages/notifier/uninstall-ps7.js",
     "assets",
     "README.md"
   ],

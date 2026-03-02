@@ -14,11 +14,9 @@ export async function installGitBash(): Promise<void> {
   const bashrcPath = path.join(os.homedir(), ".bashrc");
   const backupPath = `${bashrcPath}.crashcue.bak`;
 
-  let notifierPath = "";
-  try {
-    const notifierPkg = require.resolve("../../../notifier/package.json");
-    notifierPath = path.dirname(notifierPkg);
-  } catch (e) {
+  let notifierPath = path.resolve(__dirname, "../../../notifier");
+  if (!fs.existsSync(path.join(notifierPath, "package.json"))) {
+    // Fallback or error
     notifierPath = path.resolve(__dirname, "../../../notifier");
   }
 

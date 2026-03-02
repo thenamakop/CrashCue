@@ -143,10 +143,10 @@ You can change the crash sound easily:
 
 ```bash
 # Set a custom sound (WAV only on Windows)
-crashcue config sound "C:\Sounds\error.wav"
+crashcue config set-sound "C:\Sounds\error.wav"
 
 # Check current sound
-crashcue config show
+crashcue config get-sound
 
 # Reset to default
 crashcue config reset

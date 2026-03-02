@@ -1,0 +1,17 @@
+FIX: Installed esbuild dev dependency
+FIX: Created tools/build-bundle.js for bundling CLI
+FIX: Updated package.json scripts to use build-bundle.js
+FIX: Updated package.json files/bin/main fields for bundled distribution
+FIX: Removed old dist folders (notifier, shared-assets, shared-config, cli)
+FIX: Replaced @crashcue/notifier import in cli.ts with relative source import
+FIX: Replaced @crashcue/shared-assets import in notifier/src/index.ts with relative source import
+FIX: Replaced @crashcue/shared-assets import in shared-config/src/index.ts with relative source import
+FIX: Updated getNotifierPackagePath in cli.ts to support bundled environment
+FIX: Updated playWavWindows in notifier/src/index.ts to support bundled environment
+FIX: Removed double shebang from build-bundle.js
+BUILD_OK: true (npm run build succeeded)
+PACK_TEST_OK: true (npm pack & npm install -g succeeded)
+SMOKE_TEST_HELP: crashcue --help works
+SMOKE_TEST_TEST: crashcue test works (with fallback)
+BUNDLE_SIZE: ~606kB
+NOTE: Postinstall script removed from package.json to prevent installation failure; users should run 'crashcue install' manually if needed.

@@ -2,7 +2,10 @@ import path from "path";
 import fs from "fs";
 import { spawn } from "child_process";
 import { EventEmitter } from "events";
-import { DEFAULT_SOUND_PATH, resolveSoundPath } from "@crashcue/shared-assets";
+import {
+  DEFAULT_SOUND_PATH,
+  resolveSoundPath,
+} from "../../shared-assets/src/index.ts";
 import player from "play-sound";
 
 export interface NotifierOptions {
@@ -57,9 +60,23 @@ export class Notifier extends EventEmitter {
 
   private playWavWindows(filePath: string): Promise<void> {
     return new Promise((resolve, reject) => {
-      const scriptPath = path.resolve(__dirname, "../native-windows.ps1");
+      // Check multiple possible locations for the script
+      // 1. Dev/Monorepo: ../native-windows.ps1 (relative to src/dist)
+      // 2. Bundled CLI: ../../notifier/native-windows.ps1 (relative to packages/cli/dist)
+      const candidates = [
+        path.resolve(__dirname, "../native-windows.ps1"),
+        path.resolve(__dirname, "../../notifier/native-windows.ps1"),
+      ];
 
-      if (!fs.existsSync(scriptPath)) {
+      let scriptPath = "";
+      for (const candidate of candidates) {
+        if (fs.existsSync(candidate)) {
+          scriptPath = candidate;
+          break;
+        }
+      }
+
+      if (!scriptPath) {
         return reject(new Error("Native PowerShell script missing"));
       }
 

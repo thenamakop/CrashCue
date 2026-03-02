@@ -41,8 +41,8 @@ jobs:
 
       - name: Verify Mandatory Default Asset Exists
         run: |
-          if (!(Test-Path "assets/faahhhhhh.wav")) {
-            Write-Error "Mandatory default WAV asset missing."
+          if (-Not (Test-Path "packages/notifier/assets/faahhhhhh.wav")) {
+            Write-Error "Mandatory default WAV asset missing at packages/notifier/assets/faahhhhhh.wav"
             exit 1
           }
 

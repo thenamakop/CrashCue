@@ -32,7 +32,7 @@ export async function installPowerShell(): Promise<void> {
   // 1. Prepare Paths
   let notifierPath = "";
   try {
-    const notifierPkg = require.resolve("@crashcue/notifier/package.json");
+    const notifierPkg = require.resolve("../../../notifier/package.json");
     notifierPath = path.dirname(notifierPkg);
   } catch (e) {
     notifierPath = path.resolve(__dirname, "../../../notifier");

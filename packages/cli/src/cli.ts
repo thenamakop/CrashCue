@@ -1,5 +1,5 @@
 import { spawn, execSync } from "child_process";
-import { Notifier } from "@crashcue/notifier";
+import { Notifier } from "../../notifier/dist/index.js";
 import Conf from "conf";
 import fs from "fs";
 import path from "path";
@@ -160,7 +160,7 @@ export class CLI {
 
   private getNotifierPackagePath(): string {
     try {
-      return path.dirname(require.resolve("@crashcue/notifier/package.json"));
+      return path.dirname(require.resolve("../../notifier/package.json"));
     } catch (e) {
       console.error("Could not locate @crashcue/notifier package.");
       return "";

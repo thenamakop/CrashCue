@@ -19,23 +19,30 @@ function resolveSharedAssets() {
   // 2) fallback to local bundled assets folder (created by prepack)
   // In packaged structure: dist/index.js -> assets/ is at ../assets/
   // In source structure: src/index.ts -> assets/ is at ../assets/
-  const assetsDir = path.resolve(__dirname, "..", "assets");
-  if (fs.existsSync(assetsDir)) {
-    return {
-      DEFAULT_SOUND_PATH: path.join(assetsDir, "faahhhhhh.wav"),
-      resolveSoundPath: (customPath?: string) => {
-        if (customPath) {
-          const resolvedPath = path.resolve(customPath);
-          if (
-            fs.existsSync(resolvedPath) &&
-            fs.statSync(resolvedPath).isFile()
-          ) {
-            return resolvedPath;
+  // In root bundle: packages/cli/dist/index.js -> assets/ is at ../../../assets/
+  const candidates = [
+    path.resolve(__dirname, "..", "assets"),
+    path.resolve(__dirname, "../../..", "assets"),
+  ];
+
+  for (const assetsDir of candidates) {
+    if (fs.existsSync(assetsDir)) {
+      return {
+        DEFAULT_SOUND_PATH: path.join(assetsDir, "faahhhhhh.wav"),
+        resolveSoundPath: (customPath?: string) => {
+          if (customPath) {
+            const resolvedPath = path.resolve(customPath);
+            if (
+              fs.existsSync(resolvedPath) &&
+              fs.statSync(resolvedPath).isFile()
+            ) {
+              return resolvedPath;
+            }
           }
-        }
-        return path.join(assetsDir, "faahhhhhh.wav");
-      },
-    };
+          return path.join(assetsDir, "faahhhhhh.wav");
+        },
+      };
+    }
   }
 
   // 3) final error

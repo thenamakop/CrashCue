@@ -138,6 +138,24 @@ You should hear the default crash sound 🔊
 
 ---
 
+## 🛠 Local Verification (Windows)
+
+To verify the packaging locally on Windows:
+
+```powershell
+npm ci
+npm run build
+npm pack
+$pkg = Get-ChildItem crashcue-*.tgz | Select-Object -First 1
+npm install -g $pkg.Name
+crashcue --help
+crashcue test
+```
+
+The `crashcue test` command should play the sound silently without opening a media player.
+
+---
+
 ## ⚙️ Configuration
 
 Global config location:

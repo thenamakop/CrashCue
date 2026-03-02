@@ -1,0 +1,6 @@
+- [x] `packages/cli/src/utils/resolve-shared-assets.ts` exists and exports `resolveSharedAssets`.
+- [x] `packages/cli/src/__tests__/resolve-shared-assets.test.ts` passes all 3 scenarios.
+- [x] `packages/notifier/package.json` contains correct `prepack` script and `files` list.
+- [x] `npm pack` in `packages/notifier` produces a tarball containing `assets/faahhhhhh.wav`.
+- [x] Global install of the packed tarball works without `MODULE_NOT_FOUND`.
+- [x] `crashcue --help` runs successfully after global install.

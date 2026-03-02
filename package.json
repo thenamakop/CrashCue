@@ -14,6 +14,7 @@
     "packages/notifier/install-gitbash.js",
     "packages/notifier/uninstall-gitbash.js",
     "packages/notifier/uninstall-ps7.js",
+    "packages/notifier/assets",
     "assets",
     "README.md"
   ],
@@ -26,6 +27,7 @@
   "scripts": {
     "test": "jest",
     "build": "node tools/build-bundle.js",
+    "prepack": "node ./scripts/copy-shared-assets-into-notifier.js",
     "prepublishOnly": "npm run build",
     "pack:notifier": "node ./scripts/pack-notifier.js"
   },

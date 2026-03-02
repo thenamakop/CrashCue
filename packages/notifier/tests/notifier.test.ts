@@ -226,7 +226,7 @@ describe("Notifier (Windows-First)", () => {
           "-File",
           expect.stringContaining("native-windows.ps1"),
           "-Path",
-          DEFAULT_SOUND_PATH,
+          expect.stringMatching(/assets[\\/]faahhhhhh\.wav$/),
         ]),
         expect.anything(),
       );
@@ -241,7 +241,9 @@ describe("Notifier (Windows-First)", () => {
       await notifier.notify();
       expect(spawn).toHaveBeenCalledWith(
         "powershell.exe",
-        expect.arrayContaining([DEFAULT_SOUND_PATH]),
+        expect.arrayContaining([
+          expect.stringMatching(/assets[\\/]faahhhhhh\.wav$/),
+        ]),
         expect.anything(),
       );
     });

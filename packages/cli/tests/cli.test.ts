@@ -11,9 +11,25 @@ import { installGitBash, uninstallGitBash } from "../src/install/gitbash";
 
 // Hoist mocks to ensure they are available
 jest.mock("@crashcue/notifier");
+jest.mock("../../notifier/src/index");
 jest.mock("child_process");
 jest.mock("conf");
-jest.mock("fs");
+// Create a manual mock for fs that has spies we can control
+jest.mock("fs", () => {
+  const originalModule = jest.requireActual("fs");
+  return {
+    ...originalModule,
+    existsSync: jest.fn().mockReturnValue(true),
+    readFileSync: jest.fn().mockReturnValue("<crashcue-start>"),
+    mkdirSync: jest.fn(),
+    writeFileSync: jest.fn(),
+    copyFileSync: jest.fn(),
+    statSync: jest.fn().mockReturnValue({ isFile: () => true }),
+    promises: {
+      readFile: jest.fn().mockResolvedValue(""),
+    },
+  };
+});
 jest.mock("../src/install/powershell");
 jest.mock("../src/install/gitbash");
 
@@ -56,9 +72,10 @@ describe("CrashCue CLI (Windows-Safe)", () => {
       path: "C:\\mock\\config.json",
     }));
 
-    // Mock FS default behavior
+    // Reset FS default behavior
     (fs.existsSync as jest.Mock).mockReturnValue(true);
     (fs.readFileSync as jest.Mock).mockReturnValue("<crashcue-start>");
+    (fs.promises.readFile as jest.Mock).mockResolvedValue("");
 
     cli = new CLI();
 
@@ -303,7 +320,7 @@ describe("CrashCue CLI (Windows-Safe)", () => {
     });
 
     test("set-sound should validate file existence", async () => {
-      (fs.existsSync as jest.Mock).mockReturnValue(false);
+      (fs.existsSync as unknown as jest.Mock).mockReturnValue(false);
       const consoleSpy = jest
         .spyOn(console, "error")
         .mockImplementation(() => {});

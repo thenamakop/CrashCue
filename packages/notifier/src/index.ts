@@ -16,27 +16,41 @@ function resolveSharedAssets() {
   }
 
   // 2) fallback to bundled assets added by prepack
-  const assetsDir = path.resolve(__dirname, "..", "assets"); // notifier/package root -> assets
-  if (fs.existsSync(assetsDir)) {
-    return {
-      BASE_PATH: assetsDir,
-      DEFAULT_SOUND_PATH: path.join(assetsDir, "faahhhhhh.wav"),
-      resolveSoundPath: (customPath?: string) => {
-        if (customPath) {
-          const resolvedPath = path.resolve(customPath);
-          if (
-            fs.existsSync(resolvedPath) &&
-            fs.statSync(resolvedPath).isFile()
-          ) {
-            return resolvedPath;
+  // In packaged structure: dist/index.js -> assets/ is at ../assets/
+  // In source structure: src/index.ts -> assets/ is at ../assets/
+  // In root bundle: packages/cli/dist/index.js -> assets/ is at ../../../assets/
+  const candidates = [
+    path.resolve(__dirname, "..", "assets"),
+    path.resolve(__dirname, "../../..", "assets"),
+    path.resolve(__dirname, "../../notifier/assets"), // From cli/dist to notifier/assets
+  ];
+
+  for (const assetsDir of candidates) {
+    // console.log("Notifier checking assets at:", assetsDir);
+    if (fs.existsSync(assetsDir)) {
+      return {
+        DEFAULT_SOUND_PATH: path.join(assetsDir, "faahhhhhh.wav"),
+        resolveSoundPath: (customPath?: string) => {
+          if (customPath) {
+            const resolvedPath = path.resolve(customPath);
+            if (
+              fs.existsSync(resolvedPath) &&
+              fs.statSync(resolvedPath).isFile()
+            ) {
+              return resolvedPath;
+            }
           }
-        }
-        return path.join(assetsDir, "faahhhhhh.wav");
-      },
-    };
+          return path.join(assetsDir, "faahhhhhh.wav");
+        },
+      };
+    }
   }
 
   // 3) final error if neither found
+  console.error(
+    "Notifier failed to resolve shared assets. Checked:",
+    candidates,
+  );
   throw new Error(
     "Cannot resolve shared assets. Expected installed @crashcue/shared-assets or bundled packages/notifier/assets/",
   );

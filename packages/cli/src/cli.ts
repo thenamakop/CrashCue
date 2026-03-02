@@ -1,5 +1,6 @@
 import { spawn, execSync } from "child_process";
 import { Notifier } from "../../notifier/src/index";
+import { resolveSharedAssets } from "./utils/resolve-shared-assets";
 import Conf from "conf";
 import fs from "fs";
 import path from "path";
@@ -33,7 +34,11 @@ export class CLI {
   public async run(args: string[]): Promise<number> {
     if (args[0] === "run-sound") {
       // Internal command for cross-shell support
-      const sound = this.config.get("soundPath");
+      let sound = this.config.get("soundPath");
+      if (!sound) {
+        const assetsDir = resolveSharedAssets();
+        sound = path.resolve(assetsDir, "faahhhhhh.wav");
+      }
       try {
         await this.notifier.notify({ sound: sound || undefined });
       } catch (err: unknown) {
@@ -94,7 +99,15 @@ export class CLI {
 
         if (notifyOnFailure && exitCode !== 0) {
           // Play sound
-          const sound = this.config.get("soundPath");
+          let sound = this.config.get("soundPath");
+          if (!sound) {
+            try {
+              const assetsDir = resolveSharedAssets();
+              sound = path.resolve(assetsDir, "faahhhhhh.wav");
+            } catch (e) {
+              // fallback will be handled by notifier
+            }
+          }
           try {
             await this.notifier.notify({ sound: sound || undefined });
           } catch (err: unknown) {

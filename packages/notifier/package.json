@@ -9,11 +9,16 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "@crashcue/shared-assets": "file:../shared-assets",
     "yargs": "^17.0.0",
     "play-sound": "^1.1.6"
   },
+  "files": [
+    "dist",
+    "native-windows.ps1",
+    "assets"
+  ],
   "devDependencies": {
+    "@crashcue/shared-assets": "file:../shared-assets",
     "@types/yargs": "^17.0.0",
     "@types/node": "^20.0.0",
     "typescript": "^5.0.0"

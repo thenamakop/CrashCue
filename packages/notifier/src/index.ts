@@ -2,11 +2,49 @@ import path from "path";
 import fs from "fs";
 import { spawn } from "child_process";
 import { EventEmitter } from "events";
-import {
-  DEFAULT_SOUND_PATH,
-  resolveSoundPath,
-} from "../../shared-assets/src/index";
 import player from "play-sound";
+
+function resolveSharedAssets() {
+  // 1) try workspace / installed package
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const pkg = require("@crashcue/shared-assets");
+    if (pkg && pkg.DEFAULT_SOUND_PATH) {
+      return pkg;
+    }
+  } catch (err) {
+    // ignore
+  }
+
+  // 2) fallback to local bundled assets folder (created by prepack)
+  // In packaged structure: dist/index.js -> assets/ is at ../assets/
+  // In source structure: src/index.ts -> assets/ is at ../assets/
+  const assetsDir = path.resolve(__dirname, "..", "assets");
+  if (fs.existsSync(assetsDir)) {
+    return {
+      DEFAULT_SOUND_PATH: path.join(assetsDir, "faahhhhhh.wav"),
+      resolveSoundPath: (customPath?: string) => {
+        if (customPath) {
+          const resolvedPath = path.resolve(customPath);
+          if (
+            fs.existsSync(resolvedPath) &&
+            fs.statSync(resolvedPath).isFile()
+          ) {
+            return resolvedPath;
+          }
+        }
+        return path.join(assetsDir, "faahhhhhh.wav");
+      },
+    };
+  }
+
+  // 3) final error
+  throw new Error(
+    "Shared assets not found. Expected @crashcue/shared-assets or bundled assets in packages/notifier/assets.",
+  );
+}
+
+const { DEFAULT_SOUND_PATH, resolveSoundPath } = resolveSharedAssets();
 
 export interface NotifierOptions {
   sound?: string;

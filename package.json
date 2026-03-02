@@ -26,6 +26,7 @@
   "scripts": {
     "test": "jest",
     "build": "node tools/build-bundle.js",
+    "prepack": "node ./scripts/copy-shared-assets-to-notifier.js",
     "prepublishOnly": "npm run build"
   },
   "repository": {

@@ -24,7 +24,28 @@ export async function installCMD(): Promise<void> {
   // The CMD payload uses direct PowerShell invocation for reliability and speed
   // We use `call` to ensure it executes properly within the context
   // Use powershell.exe directly to avoid 'crashcue' PATH dependency
-  const cmdPayload = `if errorlevel 1 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "${nativeScriptPath}" -Path "${soundPath}"`;
+  const cmdPayload = `doskey /macrofile="${path.join(notifierPath, "cmd_macros.doskey")}"`;
+
+  // Create macros file
+  const macrosContent = `
+ls=ls $* $T if errorlevel 1 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "${nativeScriptPath}" -Path "${soundPath}"
+dir=dir $* $T if errorlevel 1 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "${nativeScriptPath}" -Path "${soundPath}"
+copy=copy $* $T if errorlevel 1 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "${nativeScriptPath}" -Path "${soundPath}"
+move=move $* $T if errorlevel 1 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "${nativeScriptPath}" -Path "${soundPath}"
+del=del $* $T if errorlevel 1 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "${nativeScriptPath}" -Path "${soundPath}"
+mkdir=mkdir $* $T if errorlevel 1 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "${nativeScriptPath}" -Path "${soundPath}"
+rmdir=rmdir $* $T if errorlevel 1 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "${nativeScriptPath}" -Path "${soundPath}"
+npm=npm $* $T if errorlevel 1 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "${nativeScriptPath}" -Path "${soundPath}"
+git=git $* $T if errorlevel 1 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "${nativeScriptPath}" -Path "${soundPath}"
+node=node $* $T if errorlevel 1 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "${nativeScriptPath}" -Path "${soundPath}"
+`;
+
+  try {
+    const macrosPath = path.join(notifierPath, "cmd_macros.doskey");
+    require("fs").writeFileSync(macrosPath, macrosContent.trim(), "utf8");
+  } catch (e) {
+    console.warn("   ⚠️ Failed to write macros file.");
+  }
 
   try {
     // 2. Read current AutoRun
@@ -46,18 +67,26 @@ export async function installCMD(): Promise<void> {
     }
 
     // 3. Check for existing integration
-    // Check for "native-windows.ps1" which indicates our direct payload
-    if (currentAutoRun.includes("native-windows.ps1")) {
+    // Check for "cmd_macros.doskey" which indicates our new macro payload
+    if (currentAutoRun.includes("cmd_macros.doskey")) {
       console.log("   ✅ CMD integration already present.");
       return;
     }
 
     // Remove legacy payload if present
-    if (currentAutoRun.includes("crashcue run-sound")) {
+    if (
+      currentAutoRun.includes("native-windows.ps1") ||
+      currentAutoRun.includes("crashcue run-sound")
+    ) {
       console.log("   ℹ️ Upgrading legacy CMD integration...");
+      // Remove known legacy patterns
+      currentAutoRun = currentAutoRun
+        .replace(/if errorlevel 1 powershell\.exe .*native-windows\.ps1.*/g, "")
+        .trim();
       currentAutoRun = currentAutoRun
         .replace(/if errorlevel 1 call crashcue run-sound/g, "")
         .trim();
+
       // Clean up &
       currentAutoRun = currentAutoRun.replace(/^&|&$/g, "").trim();
       currentAutoRun = currentAutoRun.replace(/&\s*&/g, "&").trim();
@@ -115,6 +144,7 @@ export async function uninstallCMD(): Promise<void> {
     }
 
     if (
+      !currentAutoRun.includes("cmd_macros.doskey") &&
       !currentAutoRun.includes("native-windows.ps1") &&
       !currentAutoRun.includes("crashcue run-sound")
     ) {
@@ -123,16 +153,13 @@ export async function uninstallCMD(): Promise<void> {
     }
 
     // Remove our payload (both legacy and new)
-    // Regex is tricky with paths, so we might need to be careful
-    // The new payload contains paths which might vary? No, they are absolute but deterministic per install.
-    // However, simplest is to remove the specific string if we can reconstruct it, OR regex match the pattern.
-    // The pattern is: if errorlevel 1 powershell.exe ... native-windows.ps1 ...
-
     // Let's try to remove by splitting on '&' and filtering
     const parts = currentAutoRun.split("&").map((p) => p.trim());
     const keptParts = parts.filter((p) => {
       return (
-        !p.includes("native-windows.ps1") && !p.includes("crashcue run-sound")
+        !p.includes("cmd_macros.doskey") &&
+        !p.includes("native-windows.ps1") &&
+        !p.includes("crashcue run-sound")
       );
     });
 

@@ -27,7 +27,7 @@ describe("CMD Integration", () => {
       expect.anything(),
     );
     expect(execSync).toHaveBeenCalledWith(
-      expect.stringContaining("native-windows.ps1"),
+      expect.stringContaining("cmd_macros.doskey"),
       expect.anything(),
     );
   });
@@ -35,7 +35,7 @@ describe("CMD Integration", () => {
   test("uninstallCMD should remove AutoRun registry key", async () => {
     (execSync as jest.Mock).mockImplementation((cmd) => {
       if (cmd.includes("reg query")) {
-        return "    AutoRun    REG_SZ    if errorlevel 1 powershell.exe ... native-windows.ps1 ...";
+        return "    AutoRun    REG_SZ    doskey /macrofile=...cmd_macros.doskey";
       }
       return "";
     });
@@ -59,7 +59,7 @@ describe("CMD Integration", () => {
   test("installCMD should be idempotent", async () => {
     (execSync as jest.Mock).mockImplementation((cmd) => {
       if (cmd.includes("reg query")) {
-        return "    AutoRun    REG_SZ    if errorlevel 1 powershell.exe ... native-windows.ps1 ...";
+        return "    AutoRun    REG_SZ    doskey /macrofile=...cmd_macros.doskey";
       }
       return "";
     });

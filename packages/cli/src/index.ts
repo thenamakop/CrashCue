@@ -45,12 +45,48 @@ yargs(hideBin(process.argv))
   .command("doctor", "Check CrashCue status and integrations", {}, async () => {
     await cli.doctor();
   })
-  .command("install", "Install shell integrations", {}, async () => {
-    await cli.install();
-  })
-  .command("uninstall", "Uninstall shell integrations", {}, async () => {
-    await cli.uninstall();
-  })
+  .command(
+    "install",
+    "Install shell integrations",
+    (yargs) => {
+      yargs.command(
+        "powershell",
+        "Install PowerShell integration",
+        {},
+        async () => {
+          const { installPowerShell } = require("./install/powershell");
+          await installPowerShell();
+        },
+      );
+    },
+    async (argv) => {
+      // Default to all if no subcommand
+      if (!argv._.includes("powershell")) {
+        await cli.install();
+      }
+    },
+  )
+  .command(
+    "uninstall",
+    "Uninstall shell integrations",
+    (yargs) => {
+      yargs.command(
+        "powershell",
+        "Uninstall PowerShell integration",
+        {},
+        async () => {
+          const { uninstallPowerShell } = require("./install/powershell");
+          await uninstallPowerShell();
+        },
+      );
+    },
+    async (argv) => {
+      // Default to all if no subcommand
+      if (!argv._.includes("powershell")) {
+        await cli.uninstall();
+      }
+    },
+  )
   .command("status", "Show current configuration and status", {}, async () => {
     await cli.status();
   })

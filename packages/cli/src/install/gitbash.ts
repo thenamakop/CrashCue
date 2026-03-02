@@ -14,6 +14,21 @@ export async function installGitBash(): Promise<void> {
   const bashrcPath = path.join(os.homedir(), ".bashrc");
   const backupPath = `${bashrcPath}.crashcue.bak`;
 
+  let notifierPath = "";
+  try {
+    const notifierPkg = require.resolve("@crashcue/notifier/package.json");
+    notifierPath = path.dirname(notifierPkg);
+  } catch (e) {
+    notifierPath = path.resolve(__dirname, "../../../notifier");
+  }
+
+  const nativeScriptPath = path.join(notifierPath, "native-windows.ps1");
+  const soundPath = path.resolve(notifierPath, "../../assets/faahhhhhh.wav");
+
+  // Escape paths for Bash (forward slashes)
+  const escapedScriptPath = nativeScriptPath.split(path.sep).join("/");
+  const escapedSoundPath = soundPath.split(path.sep).join("/");
+
   // 2. Backup Profile
   if (fs.existsSync(bashrcPath)) {
     try {
@@ -31,9 +46,19 @@ export async function installGitBash(): Promise<void> {
   const startMarker = "# <crashcue-start>";
   const endMarker = "# <crashcue-end>";
 
-  // Use the internal command `crashcue run-sound`
+  // Use PROMPT_COMMAND with direct PowerShell invocation for low latency
+  // Using 'start' to launch independently might be even faster but 'powershell ... &' is standard async
+  // Note: We use 'powershell.exe' specifically (Windows PowerShell) as it's always available
   const block = `${startMarker}
-trap 'if [ $? -ne 0 ]; then crashcue run-sound; fi' DEBUG
+crashcue_prompt() {
+    local EXIT_CODE=$?
+    if [ $EXIT_CODE -ne 0 ]; then
+        powershell.exe -NoProfile -ExecutionPolicy Bypass -File "${escapedScriptPath}" -Path "${escapedSoundPath}" >/dev/null 2>&1 &
+    fi
+}
+if [[ ! "$PROMPT_COMMAND" =~ "crashcue_prompt" ]]; then
+    PROMPT_COMMAND="crashcue_prompt;$PROMPT_COMMAND"
+fi
 ${endMarker}`;
 
   // 4. Read & Modify .bashrc

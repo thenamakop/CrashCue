@@ -119,8 +119,8 @@ yargs(hideBin(process.argv))
   .command("config", "Manage configuration", (yargs) => {
     yargs
       .command(
-        "set-sound <path>",
-        "Set custom crash sound",
+        "sound <path>",
+        "Set custom crash sound (absolute path to .wav)",
         (yargs) => {
           yargs.positional("path", {
             describe: "Path to sound file",
@@ -131,8 +131,8 @@ yargs(hideBin(process.argv))
           await cli.setSound(argv.path as string);
         },
       )
-      .command("get-sound", "Get current crash sound path", {}, async () => {
-        await cli.getSound();
+      .command("show", "Show current configuration", {}, async () => {
+        await cli.showConfig();
       })
       .command("reset", "Reset configuration to defaults", {}, async () => {
         await cli.resetConfig();

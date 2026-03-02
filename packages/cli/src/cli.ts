@@ -10,7 +10,7 @@ import { installGitBash, uninstallGitBash } from "./install/gitbash";
 
 interface CliConfig {
   muted: boolean;
-  sound: string;
+  soundPath: string;
   ignoreCommands: string[];
 }
 
@@ -24,7 +24,7 @@ export class CLI {
       projectName: "crashcue",
       defaults: {
         muted: false,
-        sound: "",
+        soundPath: "",
         ignoreCommands: [],
       },
     });
@@ -33,7 +33,7 @@ export class CLI {
   public async run(args: string[]): Promise<number> {
     if (args[0] === "run-sound") {
       // Internal command for cross-shell support
-      const sound = this.config.get("sound");
+      const sound = this.config.get("soundPath");
       try {
         await this.notifier.notify({ sound: sound || undefined });
       } catch (err: unknown) {
@@ -94,7 +94,7 @@ export class CLI {
 
         if (notifyOnFailure && exitCode !== 0) {
           // Play sound
-          const sound = this.config.get("sound");
+          const sound = this.config.get("soundPath");
           try {
             await this.notifier.notify({ sound: sound || undefined });
           } catch (err: unknown) {
@@ -135,16 +135,16 @@ export class CLI {
       return;
     }
     const absolutePath = require("path").resolve(path);
-    this.config.set("sound", absolutePath);
+    this.config.set("soundPath", absolutePath);
     console.log(`Sound set to: ${absolutePath} 🎵`);
   }
 
-  public async getSound(): Promise<void> {
-    const sound = this.config.get("sound");
+  public async showConfig(): Promise<void> {
+    const sound = this.config.get("soundPath");
     if (sound) {
-      console.log(sound);
+      console.log(`Sound: ${sound}`);
     } else {
-      console.log("Default sound (none configured)");
+      console.log("Sound: Default (none configured)");
     }
   }
 
@@ -192,7 +192,7 @@ export class CLI {
 
     // 2. Check Default WAV
     try {
-      const configSound = this.config.get("sound");
+      const configSound = this.config.get("soundPath");
       if (configSound) {
         if (fs.existsSync(configSound)) {
           console.log(`✅ Configured sound exists: ${configSound}`);
@@ -331,7 +331,7 @@ export class CLI {
     console.log("📊 CrashCue Status\n");
     const muted = this.config.get("muted");
     console.log(`Enabled: ${!muted}`);
-    console.log(`Sound: ${this.config.get("sound") || "Default"}`);
+    console.log(`Sound: ${this.config.get("soundPath") || "Default"}`);
     const ignore = this.config.get("ignoreCommands");
     console.log(
       `Ignore List: ${ignore && ignore.length > 0 ? ignore.join(", ") : "None"}`,

@@ -10,9 +10,9 @@ try {
     $ConfigPath = "$env:APPDATA\crashcue\config.json"
     if (Test-Path $ConfigPath) {
         $Config = Get-Content $ConfigPath -Raw | ConvertFrom-Json
-        if ($Config.sound -and (Test-Path $Config.sound)) {
-            if ($Config.sound -match "\.wav$") {
-                $SoundToPlay = $Config.sound
+        if ($Config.soundPath -and (Test-Path $Config.soundPath)) {
+            if ($Config.soundPath -match "\.wav$") {
+                $SoundToPlay = $Config.soundPath
             }
         }
     }

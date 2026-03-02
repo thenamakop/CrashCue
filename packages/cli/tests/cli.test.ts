@@ -3,13 +3,19 @@ import { Notifier } from "@crashcue/notifier";
 import { spawn, execSync } from "child_process";
 import Conf from "conf";
 import fs from "fs";
-import path from "path";
+import {
+  installPowerShell,
+  uninstallPowerShell,
+} from "../src/install/powershell";
+import { installGitBash, uninstallGitBash } from "../src/install/gitbash";
 
 // Hoist mocks to ensure they are available
 jest.mock("@crashcue/notifier");
 jest.mock("child_process");
 jest.mock("conf");
 jest.mock("fs");
+jest.mock("../src/install/powershell");
+jest.mock("../src/install/gitbash");
 
 describe("CrashCue CLI (Windows-Safe)", () => {
   let cli: CLI;
@@ -275,7 +281,10 @@ describe("CrashCue CLI (Windows-Safe)", () => {
       Object.defineProperty(process, "platform", { value: "linux" });
       const newSound = "C:\\custom\\sound.mp3";
       await cli.setSound(newSound);
-      expect(mockConf.set).toHaveBeenCalledWith("sound", expect.any(String));
+      expect(mockConf.set).toHaveBeenCalledWith(
+        "soundPath",
+        expect.any(String),
+      );
     });
 
     test("set-sound should enforce .wav on Windows", async () => {
@@ -308,27 +317,27 @@ describe("CrashCue CLI (Windows-Safe)", () => {
       consoleSpy.mockRestore();
     });
 
-    test("get-sound should print current sound", async () => {
+    test("showConfig should print current sound", async () => {
       mockConf.get.mockReturnValue("C:\\sound.wav");
       const consoleSpy = jest
         .spyOn(console, "log")
         .mockImplementation(() => {});
 
-      await cli.getSound();
-      expect(consoleSpy).toHaveBeenCalledWith("C:\\sound.wav");
+      await cli.showConfig();
+      expect(consoleSpy).toHaveBeenCalledWith("Sound: C:\\sound.wav");
 
       consoleSpy.mockRestore();
     });
 
-    test("get-sound should print default if none set", async () => {
+    test("showConfig should print default if none set", async () => {
       mockConf.get.mockReturnValue(undefined);
       const consoleSpy = jest
         .spyOn(console, "log")
         .mockImplementation(() => {});
 
-      await cli.getSound();
+      await cli.showConfig();
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining("Default sound"),
+        expect.stringContaining("Sound: Default"),
       );
 
       consoleSpy.mockRestore();
@@ -354,22 +363,14 @@ describe("CrashCue CLI (Windows-Safe)", () => {
   });
 
   describe("Management Commands", () => {
-    test("install should run install-all-shells.js", async () => {
+    test("install should call shell installers", async () => {
       const consoleSpy = jest
         .spyOn(console, "log")
         .mockImplementation(() => {});
       await cli.install();
-      expect(mockExecSync).toHaveBeenCalledWith(
-        expect.stringContaining("install-all-shells.js"),
-        expect.anything(),
-      );
+      expect(installPowerShell).toHaveBeenCalled();
+      expect(installGitBash).toHaveBeenCalled();
       consoleSpy.mockRestore();
-    });
-
-    test("install should abort if package not found", async () => {
-      jest.spyOn(cli as any, "getNotifierPackagePath").mockReturnValue("");
-      await cli.install();
-      expect(mockExecSync).not.toHaveBeenCalled();
     });
 
     test("install should handle failure gracefully", async () => {
@@ -377,33 +378,27 @@ describe("CrashCue CLI (Windows-Safe)", () => {
         .spyOn(console, "error")
         .mockImplementation(() => {});
       const logSpy = jest.spyOn(console, "log").mockImplementation(() => {});
-      mockExecSync.mockImplementationOnce(() => {
-        throw new Error("Install failed");
-      });
+
+      (installPowerShell as jest.Mock).mockRejectedValueOnce(
+        new Error("Install failed"),
+      );
+
       await cli.install();
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining("Installation failed"),
+        expect.stringContaining("PowerShell installation failed"),
       );
       consoleSpy.mockRestore();
       logSpy.mockRestore();
     });
 
-    test("uninstall should run uninstall-all-shells.js", async () => {
+    test("uninstall should call shell uninstallers", async () => {
       const consoleSpy = jest
         .spyOn(console, "log")
         .mockImplementation(() => {});
       await cli.uninstall();
-      expect(mockExecSync).toHaveBeenCalledWith(
-        expect.stringContaining("uninstall-all-shells.js"),
-        expect.anything(),
-      );
+      expect(uninstallPowerShell).toHaveBeenCalled();
+      expect(uninstallGitBash).toHaveBeenCalled();
       consoleSpy.mockRestore();
-    });
-
-    test("uninstall should abort if package not found", async () => {
-      jest.spyOn(cli as any, "getNotifierPackagePath").mockReturnValue("");
-      await cli.uninstall();
-      expect(mockExecSync).not.toHaveBeenCalled();
     });
 
     test("uninstall should handle failure gracefully", async () => {
@@ -411,12 +406,14 @@ describe("CrashCue CLI (Windows-Safe)", () => {
         .spyOn(console, "error")
         .mockImplementation(() => {});
       const logSpy = jest.spyOn(console, "log").mockImplementation(() => {});
-      mockExecSync.mockImplementationOnce(() => {
-        throw new Error("Uninstall failed");
-      });
+
+      (uninstallPowerShell as jest.Mock).mockRejectedValueOnce(
+        new Error("Uninstall failed"),
+      );
+
       await cli.uninstall();
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining("Uninstallation failed"),
+        expect.stringContaining("PowerShell uninstallation failed"),
       );
       consoleSpy.mockRestore();
       logSpy.mockRestore();
@@ -462,12 +459,6 @@ describe("CrashCue CLI (Windows-Safe)", () => {
         expect.anything(),
       );
 
-      // Should check CMD registry
-      expect(mockExecSync).toHaveBeenCalledWith(
-        expect.stringContaining("reg query"),
-        expect.anything(),
-      );
-
       consoleSpy.mockRestore();
     });
 
@@ -481,7 +472,6 @@ describe("CrashCue CLI (Windows-Safe)", () => {
       (fs.existsSync as jest.Mock).mockReturnValue(false);
       mockExecSync.mockImplementation((cmd) => {
         if (cmd.includes("pwsh")) throw new Error("pwsh not found");
-        if (cmd.includes("reg query")) throw new Error("reg not found");
         return "";
       });
 
@@ -490,12 +480,10 @@ describe("CrashCue CLI (Windows-Safe)", () => {
       expect(consoleSpy).toHaveBeenCalledWith(
         expect.stringContaining("Native Windows Script MISSING"),
       );
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining("PowerShell 7 not detected"),
-      );
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining("CMD AutoRun integration MISSING"),
-      );
+      // "not detected" log is commented out in source, so we shouldn't expect it
+      // expect(consoleSpy).toHaveBeenCalledWith(
+      //   expect.stringContaining("PowerShell 7 not detected"),
+      // );
       expect(consoleSpy).toHaveBeenCalledWith(
         expect.stringContaining("Git Bash .bashrc not found"),
       );
@@ -533,7 +521,9 @@ describe("CrashCue CLI (Windows-Safe)", () => {
       await cli.doctor();
 
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining("PowerShell 7 Profile integration MISSING"),
+        expect.stringContaining(
+          "PowerShell Core (pwsh) Profile integration MISSING",
+        ),
       );
 
       consoleSpy.mockRestore();

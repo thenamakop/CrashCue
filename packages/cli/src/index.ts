@@ -61,23 +61,37 @@ yargs(hideBin(process.argv))
   .command("doctor", "Check CrashCue status and integrations", {}, async () => {
     await cli.doctor();
   })
+  .command("run-sound", false, {}, async () => {
+    // Internal command, usually hidden but accessible
+    await cli.run(["run-sound"]);
+  })
   .command(
     "install",
     "Install shell integrations",
     (yargs) => {
-      yargs.command(
-        "powershell",
-        "Install PowerShell integration",
-        {},
-        async () => {
-          const { installPowerShell } = require("./install/powershell");
-          await installPowerShell();
-        },
-      );
+      yargs
+        .command(
+          "powershell",
+          "Install PowerShell integration",
+          {},
+          async () => {
+            await cli.install("powershell");
+          },
+        )
+        .command("cmd", "Install CMD integration", {}, async () => {
+          await cli.install("cmd");
+        })
+        .command("gitbash", "Install Git Bash integration", {}, async () => {
+          await cli.install("gitbash");
+        });
     },
     async (argv) => {
       // Default to all if no subcommand
-      if (!argv._.includes("powershell")) {
+      if (
+        !argv._.includes("powershell") &&
+        !argv._.includes("cmd") &&
+        !argv._.includes("gitbash")
+      ) {
         await cli.install();
       }
     },
@@ -86,19 +100,29 @@ yargs(hideBin(process.argv))
     "uninstall",
     "Uninstall shell integrations",
     (yargs) => {
-      yargs.command(
-        "powershell",
-        "Uninstall PowerShell integration",
-        {},
-        async () => {
-          const { uninstallPowerShell } = require("./install/powershell");
-          await uninstallPowerShell();
-        },
-      );
+      yargs
+        .command(
+          "powershell",
+          "Uninstall PowerShell integration",
+          {},
+          async () => {
+            await cli.uninstall("powershell");
+          },
+        )
+        .command("cmd", "Uninstall CMD integration", {}, async () => {
+          await cli.uninstall("cmd");
+        })
+        .command("gitbash", "Uninstall Git Bash integration", {}, async () => {
+          await cli.uninstall("gitbash");
+        });
     },
     async (argv) => {
       // Default to all if no subcommand
-      if (!argv._.includes("powershell")) {
+      if (
+        !argv._.includes("powershell") &&
+        !argv._.includes("cmd") &&
+        !argv._.includes("gitbash")
+      ) {
         await cli.uninstall();
       }
     },

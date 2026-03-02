@@ -6,6 +6,9 @@ import path from "path";
 import os from "os";
 import { installPowerShell, uninstallPowerShell } from "./install/powershell";
 
+import { installCMD, uninstallCMD } from "./install/cmd";
+import { installGitBash, uninstallGitBash } from "./install/gitbash";
+
 interface CliConfig {
   muted: boolean;
   sound: string;
@@ -29,6 +32,17 @@ export class CLI {
   }
 
   public async run(args: string[]): Promise<number> {
+    if (args[0] === "run-sound") {
+      // Internal command for cross-shell support
+      const sound = this.config.get("sound");
+      try {
+        await this.notifier.notify({ sound: sound || undefined });
+      } catch (err: unknown) {
+        // Silent failure in internal command
+      }
+      return 0;
+    }
+
     if (this.config.get("muted")) {
       return this.executeCommand(args, false);
     }
@@ -269,49 +283,73 @@ export class CLI {
     }
   }
 
-  public async install(): Promise<void> {
+  public async install(shell?: string): Promise<void> {
     console.log("📦 Installing CrashCue Shell Integrations...");
 
-    // 1. Install PowerShell 7 Integration (using new CLI logic)
-    try {
-      await installPowerShell();
-    } catch (e: any) {
-      console.error(`❌ PowerShell installation failed: ${e.message}`);
+    // 1. Install PowerShell
+    if (!shell || shell === "powershell") {
+      try {
+        await installPowerShell();
+      } catch (e: any) {
+        console.error(`❌ PowerShell installation failed: ${e.message}`);
+      }
     }
 
-    // 2. Install CMD & Git Bash (using existing scripts in notifier package)
-    const notifierPath = this.getNotifierPackagePath();
-    if (!notifierPath) return;
+    // 2. Install CMD
+    if (!shell || shell === "cmd") {
+      try {
+        await installCMD();
+      } catch (e: any) {
+        console.error(`❌ CMD installation failed: ${e.message}`);
+      }
+    }
 
-    const script = path.join(notifierPath, "install-all-shells.js");
-    try {
-      execSync(`node "${script}"`, { stdio: "inherit" });
-      console.log("\n✅ Installation complete!");
-    } catch (e) {
-      console.error("\n❌ Installation failed");
+    // 3. Install Git Bash
+    if (!shell || shell === "gitbash") {
+      try {
+        await installGitBash();
+      } catch (e: any) {
+        console.error(`❌ Git Bash installation failed: ${e.message}`);
+      }
+    }
+
+    if (!shell) {
+      console.log("\n✅ All integrations checked.");
     }
   }
 
-  public async uninstall(): Promise<void> {
+  public async uninstall(shell?: string): Promise<void> {
     console.log("🗑 Uninstalling CrashCue Shell Integrations...");
 
-    // 1. Uninstall PowerShell 7 Integration
-    try {
-      await uninstallPowerShell();
-    } catch (e: any) {
-      console.error(`❌ PowerShell uninstallation failed: ${e.message}`);
+    // 1. Uninstall PowerShell
+    if (!shell || shell === "powershell") {
+      try {
+        await uninstallPowerShell();
+      } catch (e: any) {
+        console.error(`❌ PowerShell uninstallation failed: ${e.message}`);
+      }
     }
 
-    // 2. Uninstall CMD & Git Bash
-    const notifierPath = this.getNotifierPackagePath();
-    if (!notifierPath) return;
+    // 2. Uninstall CMD
+    if (!shell || shell === "cmd") {
+      try {
+        await uninstallCMD();
+      } catch (e: any) {
+        console.error(`❌ CMD uninstallation failed: ${e.message}`);
+      }
+    }
 
-    const script = path.join(notifierPath, "uninstall-all-shells.js");
-    try {
-      execSync(`node "${script}"`, { stdio: "inherit" });
-      console.log("\n✅ Uninstallation complete!");
-    } catch (e) {
-      console.error("\n❌ Uninstallation failed");
+    // 3. Uninstall Git Bash
+    if (!shell || shell === "gitbash") {
+      try {
+        await uninstallGitBash();
+      } catch (e: any) {
+        console.error(`❌ Git Bash uninstallation failed: ${e.message}`);
+      }
+    }
+
+    if (!shell) {
+      console.log("\n✅ All integrations removed.");
     }
   }
 

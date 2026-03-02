@@ -31,7 +31,8 @@ const runScript = (scriptName) => {
 // runScript('install-ps7.js');
 
 // 2. CMD
-runScript("install-cmd.js");
+// CMD support removed in v0.2.0 due to interactive shell limitations.
+// runScript("install-cmd.js");
 
 // 3. Git Bash
 runScript("install-gitbash.js");

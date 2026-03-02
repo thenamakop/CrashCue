@@ -6,7 +6,6 @@ import path from "path";
 import os from "os";
 import { installPowerShell, uninstallPowerShell } from "./install/powershell";
 
-import { installCMD, uninstallCMD } from "./install/cmd";
 import { installGitBash, uninstallGitBash } from "./install/gitbash";
 
 interface CliConfig {
@@ -248,22 +247,6 @@ export class CLI {
         }
       }
 
-      // CMD
-      try {
-        const reg = execSync(
-          'reg query "HKCU\\Software\\Microsoft\\Command Processor" /v AutoRun',
-          { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] },
-        );
-        if (reg.includes("native-windows.ps1")) {
-          console.log("✅ CMD AutoRun integration found");
-        } else {
-          console.log("❌ CMD AutoRun integration MISSING");
-        }
-      } catch (e) {
-        // If reg query fails, key likely missing
-        console.log("❌ CMD AutoRun integration MISSING");
-      }
-
       // Git Bash
       try {
         const bashrc = path.join(os.homedir(), ".bashrc");
@@ -295,15 +278,6 @@ export class CLI {
       }
     }
 
-    // 2. Install CMD
-    if (!shell || shell === "cmd") {
-      try {
-        await installCMD();
-      } catch (e: any) {
-        console.error(`❌ CMD installation failed: ${e.message}`);
-      }
-    }
-
     // 3. Install Git Bash
     if (!shell || shell === "gitbash") {
       try {
@@ -330,14 +304,14 @@ export class CLI {
       }
     }
 
-    // 2. Uninstall CMD
-    if (!shell || shell === "cmd") {
-      try {
-        await uninstallCMD();
-      } catch (e: any) {
-        console.error(`❌ CMD uninstallation failed: ${e.message}`);
-      }
-    }
+    // 2. Uninstall CMD (Removed)
+    // if (!shell || shell === "cmd") {
+    //   try {
+    //     await uninstallCMD();
+    //   } catch (e: any) {
+    //     console.error(`❌ CMD uninstallation failed: ${e.message}`);
+    //   }
+    // }
 
     // 3. Uninstall Git Bash
     if (!shell || shell === "gitbash") {

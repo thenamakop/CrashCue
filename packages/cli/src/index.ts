@@ -78,20 +78,13 @@ yargs(hideBin(process.argv))
             await cli.install("powershell");
           },
         )
-        .command("cmd", "Install CMD integration", {}, async () => {
-          await cli.install("cmd");
-        })
         .command("gitbash", "Install Git Bash integration", {}, async () => {
           await cli.install("gitbash");
         });
     },
     async (argv) => {
       // Default to all if no subcommand
-      if (
-        !argv._.includes("powershell") &&
-        !argv._.includes("cmd") &&
-        !argv._.includes("gitbash")
-      ) {
+      if (!argv._.includes("powershell") && !argv._.includes("gitbash")) {
         await cli.install();
       }
     },
@@ -109,20 +102,13 @@ yargs(hideBin(process.argv))
             await cli.uninstall("powershell");
           },
         )
-        .command("cmd", "Uninstall CMD integration", {}, async () => {
-          await cli.uninstall("cmd");
-        })
         .command("gitbash", "Uninstall Git Bash integration", {}, async () => {
           await cli.uninstall("gitbash");
         });
     },
     async (argv) => {
       // Default to all if no subcommand
-      if (
-        !argv._.includes("powershell") &&
-        !argv._.includes("cmd") &&
-        !argv._.includes("gitbash")
-      ) {
+      if (!argv._.includes("powershell") && !argv._.includes("gitbash")) {
         await cli.uninstall();
       }
     },

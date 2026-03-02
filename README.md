@@ -171,8 +171,12 @@ CrashCue automatically integrates with your shell during installation.
 ### Supported Shells
 
 - **PowerShell 7+**: Uses a safe `prompt` hook.
-- **CMD**: Uses `AutoRun` registry hook.
 - **Git Bash**: Uses `PROMPT_COMMAND` hook.
+
+### Unsupported Features
+
+**CMD (Windows Command Prompt)**
+Support for CMD has been discontinued. The legacy `AutoRun` registry hook method proved unreliable for interactive sessions, and alternative solutions require custom DLL injection which introduces security and complexity risks that align poorly with CrashCue's "lightweight" philosophy. We recommend using PowerShell 7 or Git Bash on Windows for the best experience.
 
 ### Managing Integrations
 

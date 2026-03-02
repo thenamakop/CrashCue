@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.2.0 — 2026-03-02
+
+### Breaking Changes
+
+- **Removed CMD support**: Windows Command Prompt (cmd.exe) integration has been removed. The previous implementation using `AutoRun` macros was insufficient for reliable interactive error detection, and robust support would require invasive DLL injection. Windows users are encouraged to use PowerShell 7 or Git Bash.
+
 ## v0.1.1 — 2026-03-02
 
 ### Changed

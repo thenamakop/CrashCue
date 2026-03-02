@@ -1,73 +1,97 @@
+// packages/cli/src/utils/resolve-shared-assets.ts
 import fs from "fs";
 import path from "path";
 
 /**
- * Resolve shared assets directory in three ways (in order):
- * 1) If @crashcue/shared-assets is installed, resolve it via require.resolve
- * 2) If notifier is installed as a sibling package (global install bundling),
- *    resolve module-relative path ../../notifier/assets (safe for global installs)
- * 3) If executing inside monorepo dev, resolve process.cwd()/packages/notifier/assets
+ * Production-safe resolver for shared assets.
+ * Tries several candidates in order and returns the first existing directory path.
  *
- * This function never assumes a monorepo root and only uses __dirname for module
- * relative lookups which is safe in production builds.
+ * Candidate order:
+ * 1) Installed package: require.resolve('@crashcue/shared-assets')
+ * 2) Module-relative monorepo/bundled candidate: ../../../notifier/assets
+ *    (this resolves to packages/notifier/assets when __dirname is packages/cli/src/utils)
+ * 3) Module-relative alternate candidate: ../../notifier/assets
+ *    (keeps compatibility with some build layouts)
+ * 4) process.cwd() monorepo candidate: <cwd>/packages/notifier/assets
+ * 5) root assets candidate: <cwd>/assets
+ *
+ * Throws a clear error if none found.
  */
 export function resolveSharedAssets(): string {
-  // Debug logging
-  console.log("Resolving shared assets from:", __dirname);
+  const tried: string[] = [];
+  const debugPrefix = "Resolving shared assets from:";
 
-  // 1) installed package
+  // 0) debug context
+  // eslint-disable-next-line no-console
+  console.log(`${debugPrefix} ${__dirname}`);
+
+  // 1) Try installed package
   try {
-    // require.resolve may return a file path inside the package; return its dir
+    // require.resolve returns a file path inside the package; directory is package root
+    // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-unsafe-call
     const resolved = require.resolve("@crashcue/shared-assets");
-    // If resolved points to index.js in dist or src, we need to find the root of the package or assets dir
-    // Assuming package structure: pkg/dist/index.js -> pkg/
-    // We want pkg/assets if it exists, or just pkg if it contains assets
-    // But @crashcue/shared-assets usually exports from src/index.ts or dist/index.js
-
-    // Let's try to find the directory containing 'assets'
-    let dir = path.dirname(resolved);
-    // Walk up until we find assets or package.json
-    for (let i = 0; i < 3; i++) {
-      if (fs.existsSync(path.join(dir, "assets"))) {
-        return path.join(dir, "assets");
-      }
-      dir = path.dirname(dir);
+    const pkgDir = path.dirname(resolved);
+    tried.push(`@crashcue/shared-assets -> ${pkgDir}`);
+    if (fs.existsSync(pkgDir)) {
+      // eslint-disable-next-line no-console
+      console.log("Resolved shared-assets via require.resolve:", pkgDir);
+      return pkgDir;
     }
   } catch (err) {
-    // ignore
+    // ignore - try next candidate
   }
 
-  // 2) bundled notifier (module relative) - safe for global install where
-  // node_modules/crashcue/packages/cli/... -> ../../notifier/assets
-  // In our case, cli/src/utils -> ../../../notifier/assets (3 levels up)
-  // If compiled to dist/utils -> ../../../notifier/assets
-  const bundledCandidate = path.resolve(__dirname, "../../notifier/assets");
-  console.log("Checking bundled candidate:", bundledCandidate);
+  // 2) Module-relative monorepo/bundled candidate (three levels up)
+  const bundledCandidate = path.resolve(__dirname, "../../../notifier/assets");
+  tried.push(bundledCandidate);
+  // eslint-disable-next-line no-console
+  console.log("Checking bundled candidate (3up):", bundledCandidate);
   if (fs.existsSync(bundledCandidate)) return bundledCandidate;
 
-  // 3) local monorepo workspace dev fallback (process.cwd())
+  // 3) Module-relative alternate candidate (two levels up)
+  const altBundledCandidate = path.resolve(__dirname, "../../notifier/assets");
+  tried.push(altBundledCandidate);
+  // eslint-disable-next-line no-console
+  console.log(
+    "Checking bundled alternate candidate (2up):",
+    altBundledCandidate,
+  );
+  if (fs.existsSync(altBundledCandidate)) return altBundledCandidate;
+
+  // 4) process.cwd() monorepo candidate
   const monorepoCandidate = path.resolve(
     process.cwd(),
-    "packages/notifier/assets",
+    "packages",
+    "notifier",
+    "assets",
   );
+  tried.push(monorepoCandidate);
+  // eslint-disable-next-line no-console
   console.log("Checking monorepo candidate:", monorepoCandidate);
   if (fs.existsSync(monorepoCandidate)) return monorepoCandidate;
 
-  // 4) Root assets fallback (for repo root execution or root bundle)
-  // dist/index.js -> ../../../assets
-  const rootAssetsCandidate = path.resolve(__dirname, "../../..", "assets");
+  // 5) root assets candidate (repo root assets/)
+  const rootAssetsCandidate = path.resolve(process.cwd(), "assets");
+  tried.push(rootAssetsCandidate);
+  // eslint-disable-next-line no-console
   console.log("Checking root assets candidate:", rootAssetsCandidate);
-  if (fs.existsSync(path.join(rootAssetsCandidate, "faahhhhhh.wav")))
-    return rootAssetsCandidate;
+  if (fs.existsSync(rootAssetsCandidate)) return rootAssetsCandidate;
 
-  // Debug output if failed
+  // Nothing found — print debug summary and throw
+  // eslint-disable-next-line no-console
   console.error("Failed to resolve shared assets. Checked locations:");
+  // eslint-disable-next-line no-console
   console.error("1. @crashcue/shared-assets (require)");
+  // eslint-disable-next-line no-console
   console.error("2. " + bundledCandidate);
-  console.error("3. " + monorepoCandidate);
-  console.error("4. " + rootAssetsCandidate);
+  // eslint-disable-next-line no-console
+  console.error("3. " + altBundledCandidate);
+  // eslint-disable-next-line no-console
+  console.error("4. " + monorepoCandidate);
+  // eslint-disable-next-line no-console
+  console.error("5. " + rootAssetsCandidate);
 
   throw new Error(
-    "Cannot resolve shared assets. Ensure @crashcue/shared-assets is installed or assets are bundled.",
+    "Cannot resolve shared assets. Ensure @crashcue/shared-assets is installed or that notifier assets are bundled into packages/notifier/assets or root assets/.",
   );
 }

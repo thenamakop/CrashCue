@@ -71,7 +71,11 @@ describe("resolveSharedAssets", () => {
     // First check for bundled candidate -> false
     // Second check for monorepo candidate -> true
     existsSpy.mockImplementation((p: string) => {
-      if (p.includes("packages/notifier/assets")) return true;
+      if (
+        p.includes("packages/notifier/assets") ||
+        p.includes("notifier/assets")
+      )
+        return true;
       return false;
     });
 

@@ -6,7 +6,8 @@
     "crashcue-notify": "dist/cli.js"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepack": "node ../../scripts/copy-shared-assets-into-notifier.js"
   },
   "dependencies": {
     "yargs": "^17.0.0",
@@ -14,8 +15,8 @@
   },
   "files": [
     "dist",
-    "native-windows.ps1",
-    "assets"
+    "assets",
+    "native-windows.ps1"
   ],
   "devDependencies": {
     "@types/yargs": "^17.0.0",

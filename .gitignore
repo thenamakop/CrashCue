@@ -8,6 +8,7 @@ yarn-error.log*
 dist/
 lib/
 build/
+*.tgz
 
 # Testing
 coverage/

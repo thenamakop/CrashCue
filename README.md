@@ -118,15 +118,15 @@ You should hear the default crash sound 🔊
 
 ## 🧪 Quick Commands
 
-Command Description
-
----
-
-`crashcue test` Play test sound
-`crashcue run <command>` Run command and notify on failure
-`crashcue mute` Temporarily disable sounds
-`crashcue unmute` Re-enable sounds
-`crashcue config` Open config file
+| Command                  | Description                       |
+| ------------------------ | --------------------------------- |
+| `crashcue test`          | Play test sound                   |
+| `crashcue run <command>` | Run command and notify on failure |
+| `crashcue mute`          | Temporarily disable sounds        |
+| `crashcue unmute`        | Re-enable sounds                  |
+| `crashcue doctor`        | Check installation status         |
+| `crashcue status`        | Show current configuration        |
+| `crashcue config`        | Manage configuration              |
 
 ---
 
@@ -134,47 +134,90 @@ Command Description
 
 Global config location:
 
-    ~/.config/crashcue/config.json
+    %APPDATA%\CrashCue\config.json (Windows)
+    ~/.config/crashcue/config.json (macOS/Linux)
+
+### Sound Customization
+
+You can change the crash sound easily:
+
+```bash
+# Set a custom sound (WAV only on Windows)
+crashcue config set-sound "C:\Sounds\error.wav"
+
+# Check current sound
+crashcue config get-sound
+
+# Reset to default
+crashcue config reset
+```
 
 ### Example configuration
 
 ```json
 {
   "enabled": true,
-  "sound": "default",
-  "volume": 0.8,
-  "mode": "exit-code",
-  "regexes": ["error", "exception", "fatal"],
-  "ignoreCommands": ["git status", "ls"],
-  "debounceMs": 2000
+  "sound": "C:\\Sounds\\error.wav",
+  "ignoreCommands": ["git status", "ls"]
 }
 ```
 
 ---
 
-## 🖥 Shell Support
+## 🖥 Automatic Shell Integration
 
-CrashCue integrates with:
+CrashCue automatically integrates with your shell during installation.
 
-- Bash
-- Zsh
-- Fish
-- PowerShell
+### Supported Shells
 
-Install safely with:
+- **PowerShell 7+**: Uses a safe `prompt` hook.
+- **CMD**: Uses `AutoRun` registry hook.
+- **Git Bash**: Uses `PROMPT_COMMAND` hook.
 
-```bash
-crashcue install-shell
-```
+### Managing Integrations
 
-Uninstall:
+If you need to re-install or remove integrations:
 
 ```bash
-crashcue uninstall-shell
+# Force re-install shell hooks
+crashcue install
+
+# Remove all shell hooks
+crashcue uninstall
 ```
 
-CrashCue automatically backs up your shell profile before making
-changes.
+> **Note:** Uninstalling via `npm uninstall -g crashcue` will also automatically remove these integrations.
+
+---
+
+## ❓ Troubleshooting
+
+If you suspect CrashCue isn't working:
+
+1. **Run Doctor**
+
+   ```bash
+   crashcue doctor
+   ```
+
+   This checks for:
+   - Native script existence
+   - Sound file validity
+   - Shell profile integration status
+
+2. **Check Status**
+
+   ```bash
+   crashcue status
+   ```
+
+   Shows if you are muted or if the sound path is incorrect.
+
+3. **Manual Test**
+   ```bash
+   crashcue test
+   ```
+   Should play the configured sound immediately.
 
 ---
 

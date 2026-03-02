@@ -112,8 +112,31 @@ export class CLI {
   }
 
   public async setSound(path: string): Promise<void> {
-    this.config.set("sound", path);
-    console.log(`Sound set to: ${path} 🎵`);
+    if (process.platform === "win32" && !path.toLowerCase().endsWith(".wav")) {
+      console.error("❌ On Windows, only .wav files are supported.");
+      return;
+    }
+    if (!fs.existsSync(path)) {
+      console.error(`❌ File not found: ${path}`);
+      return;
+    }
+    const absolutePath = require("path").resolve(path);
+    this.config.set("sound", absolutePath);
+    console.log(`Sound set to: ${absolutePath} 🎵`);
+  }
+
+  public async getSound(): Promise<void> {
+    const sound = this.config.get("sound");
+    if (sound) {
+      console.log(sound);
+    } else {
+      console.log("Default sound (none configured)");
+    }
+  }
+
+  public async resetConfig(): Promise<void> {
+    this.config.clear();
+    console.log("Configuration reset to defaults 🔄");
   }
 
   public async test(): Promise<void> {

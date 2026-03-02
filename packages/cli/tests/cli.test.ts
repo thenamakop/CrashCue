@@ -272,9 +272,75 @@ describe("CrashCue CLI (Windows-Safe)", () => {
 
   describe("config command", () => {
     test("set-sound should update sound config", async () => {
+      Object.defineProperty(process, "platform", { value: "linux" });
       const newSound = "C:\\custom\\sound.mp3";
       await cli.setSound(newSound);
-      expect(mockConf.set).toHaveBeenCalledWith("sound", newSound);
+      expect(mockConf.set).toHaveBeenCalledWith("sound", expect.any(String));
+    });
+
+    test("set-sound should enforce .wav on Windows", async () => {
+      Object.defineProperty(process, "platform", { value: "win32" });
+      const consoleSpy = jest
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+
+      await cli.setSound("C:\\sound.mp3");
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining("only .wav files are supported"),
+      );
+      expect(mockConf.set).not.toHaveBeenCalled();
+
+      consoleSpy.mockRestore();
+    });
+
+    test("set-sound should validate file existence", async () => {
+      (fs.existsSync as jest.Mock).mockReturnValue(false);
+      const consoleSpy = jest
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+
+      await cli.setSound("missing.wav");
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining("File not found"),
+      );
+      expect(mockConf.set).not.toHaveBeenCalled();
+
+      consoleSpy.mockRestore();
+    });
+
+    test("get-sound should print current sound", async () => {
+      mockConf.get.mockReturnValue("C:\\sound.wav");
+      const consoleSpy = jest
+        .spyOn(console, "log")
+        .mockImplementation(() => {});
+
+      await cli.getSound();
+      expect(consoleSpy).toHaveBeenCalledWith("C:\\sound.wav");
+
+      consoleSpy.mockRestore();
+    });
+
+    test("get-sound should print default if none set", async () => {
+      mockConf.get.mockReturnValue(undefined);
+      const consoleSpy = jest
+        .spyOn(console, "log")
+        .mockImplementation(() => {});
+
+      await cli.getSound();
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining("Default sound"),
+      );
+
+      consoleSpy.mockRestore();
+    });
+
+    test("reset should clear config", async () => {
+      const consoleSpy = jest
+        .spyOn(console, "log")
+        .mockImplementation(() => {});
+      await cli.resetConfig();
+      expect(mockConf.clear).toHaveBeenCalled();
+      consoleSpy.mockRestore();
     });
   });
 

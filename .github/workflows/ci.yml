@@ -15,12 +15,12 @@ jobs:
     runs-on: ${{ matrix.os }}
     defaults:
       run:
-        shell: bash
+        shell: pwsh
 
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
+        os: [windows-latest]
         node: [20]
 
     steps:
@@ -41,21 +41,21 @@ jobs:
 
       - name: Verify Mandatory Default Asset Exists
         run: |
-          if [ ! -f "assets/faahhhhhh.mp3" ]; then
-            echo "Mandatory default asset missing."
+          if (!(Test-Path "assets/faahhhhhh.wav")) {
+            Write-Error "Mandatory default WAV asset missing."
             exit 1
-          fi
+          }
 
       - name: Build Project
         run: npm run build
 
-      - name: Run Lint (if exists)
+      - name: Smoke Test Packaged CLI
         run: |
-          if npm run | grep -q "lint"; then
-            npm run lint
-          else
-            echo "No lint script defined."
-          fi
+          npm pack
+          $pkg = Get-ChildItem crashcue-*.tgz | Select-Object -First 1
+          npm install -g $pkg.Name
+          crashcue --help
+          crashcue test
 
       - name: Run Tests with Coverage Enforcement
         run: npm test

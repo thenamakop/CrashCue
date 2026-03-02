@@ -9,17 +9,25 @@
 
 ---
 
+## ⚠ Platform Support
+
+CrashCue currently supports:
+
+- ✅ Windows (PowerShell 7+)
+- 🚧 macOS (Planned)
+- 🚧 Linux (Planned)
+
+macOS and Linux support will be introduced in a future release.
+
 ## ⚡ What is CrashCue?
 
-**CrashCue** is a lightweight, cross-platform developer tool that plays
+**CrashCue** is a lightweight developer tool that plays
 a sound whenever a terminal command fails.
 
 Whether you're working in:
 
-- 🖥 macOS Terminal\
-- 🐧 Linux Shell\
-- 🪟 Windows PowerShell\
-- 🧠 VSCode integrated terminal\
+- 🪟 Windows PowerShell
+- 🧠 VSCode integrated terminal
 - 💻 Any modern IDE terminal
 
 CrashCue instantly alerts you when a command exits with an error.
@@ -32,8 +40,8 @@ No more unnoticed crashes.
 ## 🚀 Features
 
 - 🔊 Plays sound on non-zero exit codes
-- 🎛 Fully customizable audio (WAV supported on Windows, MP3/WAV on macOS/Linux)
-- 🌍 Works on macOS, Linux, Windows
+- 🎛 Fully customizable audio (WAV supported)
+- 🪟 Optimized for Windows
 - 🧠 VSCode extension support
 - ⚡ Ultra-lightweight CLI
 - 🛠 Regex-based error detection mode
@@ -135,7 +143,6 @@ You should hear the default crash sound 🔊
 Global config location:
 
     %APPDATA%\CrashCue\config.json (Windows)
-    ~/.config/crashcue/config.json (macOS/Linux)
 
 ### Sound Customization
 

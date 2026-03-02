@@ -2,10 +2,17 @@
 
 ## v0.1.1 — 2026-03-02
 
+### Changed
+
+- Switched to bundled CLI for stable npm distribution
+- Windows-only support (macOS/Linux planned)
+- WAV-only audio playback for native reliability
+
 ### Fixed
 
-- **Global Installation**: Resolved `MODULE_NOT_FOUND` errors by bundling the CLI and all internal dependencies into a single distributable file using `esbuild`.
-- **Path Resolution**: Fixed issues where the CLI could not locate the notifier package or native scripts in global installs.
+- Resolved workspace module resolution issues
+- Fixed global install failures
+- Fixed CI asset verification
 
 ### Added
 

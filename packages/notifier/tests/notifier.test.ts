@@ -1,7 +1,7 @@
 import { Notifier } from "../src/index";
 import path from "path";
 import fs from "fs";
-import { DEFAULT_SOUND_PATH } from "@crashcue/shared-assets";
+import { DEFAULT_SOUND_PATH } from "../../shared-assets/src/index";
 import { spawn } from "child_process";
 
 // Mock spawn

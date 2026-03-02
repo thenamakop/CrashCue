@@ -2,7 +2,7 @@ import path from "path";
 import fs from "fs";
 import os from "os";
 import { ConfigLoader } from "../src/index";
-import { DEFAULT_SOUND_PATH } from "@crashcue/shared-assets";
+import { DEFAULT_SOUND_PATH } from "../../shared-assets/src/index";
 
 jest.mock("os");
 

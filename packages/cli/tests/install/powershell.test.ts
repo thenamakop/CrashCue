@@ -114,7 +114,7 @@ describe("PowerShell Integration Installer", () => {
     await uninstallPowerShell();
 
     expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining("Profile not found"),
+      expect.stringContaining("No integrations found to remove"),
     );
     expect(fs.writeFileSync).not.toHaveBeenCalled();
     consoleSpy.mockRestore();

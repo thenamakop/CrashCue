@@ -1,5 +1,5 @@
 import { spawn, execSync } from "child_process";
-import { Notifier } from "../../notifier/src/index.ts";
+import { Notifier } from "../../notifier/src/index";
 import Conf from "conf";
 import fs from "fs";
 import path from "path";

@@ -1,5 +1,5 @@
 import { CLI } from "../src/cli";
-import { Notifier } from "@crashcue/notifier";
+import { Notifier } from "../../notifier/src/index";
 import { spawn, execSync } from "child_process";
 import Conf from "conf";
 import fs from "fs";
@@ -468,8 +468,12 @@ describe("CrashCue CLI (Windows-Safe)", () => {
         .spyOn(console, "log")
         .mockImplementation(() => {});
 
-      // Mock missing components
-      (fs.existsSync as jest.Mock).mockReturnValue(false);
+      // Mock missing components: Package exists, but script is missing
+      (fs.existsSync as jest.Mock).mockImplementation((p) => {
+        if (typeof p === "string" && p.includes("package.json")) return true;
+        return false;
+      });
+
       mockExecSync.mockImplementation((cmd) => {
         if (cmd.includes("pwsh")) throw new Error("pwsh not found");
         return "";

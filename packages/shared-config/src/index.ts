@@ -4,7 +4,7 @@ import os from "os";
 import {
   DEFAULT_SOUND_PATH,
   resolveSoundPath,
-} from "../../shared-assets/src/index.ts";
+} from "../../shared-assets/src/index";
 
 export interface CrashCueConfig {
   sound?: string;

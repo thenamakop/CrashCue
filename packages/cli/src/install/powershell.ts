@@ -2,6 +2,25 @@ import fs from "fs";
 import path from "path";
 import { execSync } from "child_process";
 
+const SHELLS = [
+  { name: "Windows PowerShell", cmd: "powershell" },
+  { name: "PowerShell Core (pwsh)", cmd: "pwsh" },
+];
+
+function getProfilePath(cmd: string): string | null {
+  try {
+    return execSync(
+      `${cmd} -NoProfile -Command "$PROFILE.CurrentUserCurrentHost"`,
+      {
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "ignore"],
+      },
+    ).trim();
+  } catch (e) {
+    return null;
+  }
+}
+
 export async function installPowerShell(): Promise<void> {
   if (process.platform !== "win32") {
     console.log("❌ PowerShell integration only supported on Windows");
@@ -10,27 +29,7 @@ export async function installPowerShell(): Promise<void> {
 
   console.log("📦 Installing CrashCue PowerShell Integration...");
 
-  // 1. Detect PowerShell 7 & Profile Path
-  let profilePath: string;
-  try {
-    profilePath = execSync(
-      'powershell -NoProfile -Command "$PROFILE.CurrentUserCurrentHost"',
-      {
-        encoding: "utf8",
-        stdio: ["ignore", "pipe", "ignore"],
-      },
-    ).trim();
-  } catch (e) {
-    console.log("⚠️ PowerShell not found. Skipping.");
-    return;
-  }
-
-  if (!profilePath) {
-    console.log("⚠️ Could not determine PowerShell profile path.");
-    return;
-  }
-
-  // 2. Prepare Paths
+  // 1. Prepare Paths
   let notifierPath = "";
   try {
     const notifierPkg = require.resolve("@crashcue/notifier/package.json");
@@ -42,24 +41,7 @@ export async function installPowerShell(): Promise<void> {
   const nativeScriptPath = path.join(notifierPath, "native-windows.ps1");
   const soundPath = path.resolve(notifierPath, "../../assets/faahhhhhh.wav");
 
-  // 3. Backup Profile
-  if (fs.existsSync(profilePath)) {
-    try {
-      const backupPath = `${profilePath}.crashcue.bak`;
-      fs.copyFileSync(profilePath, backupPath);
-      console.log(`💾 Backed up profile to: ${backupPath}`);
-    } catch (e) {
-      console.warn("⚠️ Failed to backup profile.");
-    }
-  } else {
-    // Create directory if needed
-    const profileDir = path.dirname(profilePath);
-    if (!fs.existsSync(profileDir)) {
-      fs.mkdirSync(profileDir, { recursive: true });
-    }
-  }
-
-  // 4. Construct Injection Block
+  // 2. Construct Injection Block
   const startMarker = "# <crashcue-start>";
   const endMarker = "# <crashcue-end>";
 
@@ -108,51 +90,84 @@ $global:LASTEXITCODE = 0
 }
 ${endMarker}`;
 
-  // 5. Read & Modify Profile
-  try {
-    let content = "";
+  // 3. Install for each shell
+  let installedCount = 0;
+
+  for (const shell of SHELLS) {
+    const profilePath = getProfilePath(shell.cmd);
+    if (!profilePath) {
+      // Shell not found or command failed, skip silently (or debug log)
+      continue;
+    }
+
+    console.log(`🔹 Checking ${shell.name}...`);
+
+    // Backup Profile
     if (fs.existsSync(profilePath)) {
-      content = fs.readFileSync(profilePath, "utf8");
-    }
-
-    const regex = new RegExp(
-      `${startMarker.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}[\\s\\S]*?${endMarker.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`,
-      "g",
-    );
-
-    if (regex.test(content)) {
-      // Check for downgrade or legacy template
-      const match = content.match(regex);
-      if (match) {
-        const existingBlock = match[0];
-        const isLegacy = !existingBlock.includes("Template Version: 2");
-        const isDowngrade = existingBlock.includes("Template Version: 3"); // Hypothetical future check
-
-        if (isDowngrade) {
-          console.log(
-            "ℹ️ Newer CrashCue integration detected. Skipping downgrade.",
-          );
-          return;
-        }
-
-        if (isLegacy) {
-          console.log("ℹ️ Upgrading legacy CrashCue integration...");
-        }
+      try {
+        const backupPath = `${profilePath}.crashcue.bak`;
+        fs.copyFileSync(profilePath, backupPath);
+      } catch (e) {
+        // Backup failure shouldn't stop install
       }
-      content = content.replace(regex, block);
-      console.log("✅ Updated existing PowerShell integration.");
     } else {
-      if (content && !content.endsWith("\n")) {
-        content += "\n";
+      // Create directory if needed
+      const profileDir = path.dirname(profilePath);
+      if (!fs.existsSync(profileDir)) {
+        fs.mkdirSync(profileDir, { recursive: true });
       }
-      content += block + "\n";
-      console.log("✅ Injected PowerShell integration.");
     }
 
-    fs.writeFileSync(profilePath, content, "utf8");
-    console.log(`📄 Profile: ${profilePath}`);
-  } catch (err: any) {
-    console.error(`❌ Failed to update profile: ${err.message}`);
+    // Read & Modify Profile
+    try {
+      let content = "";
+      if (fs.existsSync(profilePath)) {
+        content = fs.readFileSync(profilePath, "utf8");
+      }
+
+      const regex = new RegExp(
+        `${startMarker.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}[\\s\\S]*?${endMarker.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`,
+        "g",
+      );
+
+      if (regex.test(content)) {
+        // Check for downgrade or legacy template
+        const match = content.match(regex);
+        if (match) {
+          const existingBlock = match[0];
+          const isLegacy = !existingBlock.includes("Template Version: 2");
+          const isDowngrade = existingBlock.includes("Template Version: 3");
+
+          if (isDowngrade) {
+            console.log(
+              "   ℹ️ Newer CrashCue integration detected. Skipping downgrade.",
+            );
+            continue;
+          }
+
+          if (isLegacy) {
+            console.log("   ℹ️ Upgrading legacy CrashCue integration...");
+          }
+        }
+        content = content.replace(regex, block);
+        console.log(`   ✅ Updated existing profile: ${profilePath}`);
+      } else {
+        if (content && !content.endsWith("\n")) {
+          content += "\n";
+        }
+        content += block + "\n";
+        console.log(`   ✅ Injected integration: ${profilePath}`);
+      }
+
+      fs.writeFileSync(profilePath, content, "utf8");
+      installedCount++;
+    } catch (err: any) {
+      console.error(`   ❌ Failed to update profile: ${err.message}`);
+    }
+  }
+
+  if (installedCount === 0) {
+    console.log("⚠️ No PowerShell profiles could be updated.");
   }
 }
 
@@ -164,25 +179,6 @@ export async function uninstallPowerShell(): Promise<void> {
 
   console.log("🗑 Uninstalling CrashCue PowerShell Integration...");
 
-  let profilePath: string;
-  try {
-    profilePath = execSync(
-      'powershell -NoProfile -Command "$PROFILE.CurrentUserCurrentHost"',
-      {
-        encoding: "utf8",
-        stdio: ["ignore", "pipe", "ignore"],
-      },
-    ).trim();
-  } catch (e) {
-    console.log("⚠️ PowerShell not found. Nothing to uninstall.");
-    return;
-  }
-
-  if (!profilePath || !fs.existsSync(profilePath)) {
-    console.log("⚠️ Profile not found. Nothing to uninstall.");
-    return;
-  }
-
   const startMarker = "# <crashcue-start>";
   const endMarker = "# <crashcue-end>";
   const regex = new RegExp(
@@ -190,17 +186,33 @@ export async function uninstallPowerShell(): Promise<void> {
     "g",
   );
 
-  try {
-    let content = fs.readFileSync(profilePath, "utf8");
+  let removedCount = 0;
 
-    if (regex.test(content)) {
-      content = content.replace(regex, "");
-      fs.writeFileSync(profilePath, content, "utf8");
-      console.log(`✅ Removed integration from: ${profilePath}`);
-    } else {
-      console.log("ℹ️ No integration found to remove.");
+  for (const shell of SHELLS) {
+    const profilePath = getProfilePath(shell.cmd);
+    if (!profilePath || !fs.existsSync(profilePath)) {
+      continue;
     }
-  } catch (err: any) {
-    console.error(`❌ Failed to uninstall: ${err.message}`);
+
+    try {
+      let content = fs.readFileSync(profilePath, "utf8");
+
+      if (regex.test(content)) {
+        content = content.replace(regex, "");
+        fs.writeFileSync(profilePath, content, "utf8");
+        console.log(`   ✅ Removed integration from: ${profilePath}`);
+        removedCount++;
+      } else {
+        // Nothing to remove
+      }
+    } catch (err: any) {
+      console.error(
+        `   ❌ Failed to uninstall from ${profilePath}: ${err.message}`,
+      );
+    }
+  }
+
+  if (removedCount === 0) {
+    console.log("ℹ️ No integrations found to remove.");
   }
 }

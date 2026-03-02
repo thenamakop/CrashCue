@@ -4,6 +4,7 @@ import Conf from "conf";
 import fs from "fs";
 import path from "path";
 import os from "os";
+import { installPowerShell, uninstallPowerShell } from "./install/powershell";
 
 interface CliConfig {
   muted: boolean;
@@ -193,23 +194,44 @@ export class CLI {
     // 3. Check Shell Integrations (Windows)
     if (platform === "win32") {
       // PowerShell
-      try {
-        const psProfile = execSync('pwsh -NoProfile -Command "$PROFILE"', {
-          encoding: "utf8",
-          stdio: ["ignore", "pipe", "ignore"],
-        }).trim();
-        if (psProfile && fs.existsSync(psProfile)) {
-          const content = fs.readFileSync(psProfile, "utf8");
-          if (content.includes("<crashcue-start>")) {
-            console.log("✅ PowerShell 7 Profile integration found");
+      const SHELLS = [
+        { name: "Windows PowerShell", cmd: "powershell" },
+        { name: "PowerShell Core (pwsh)", cmd: "pwsh" },
+      ];
+
+      for (const shell of SHELLS) {
+        try {
+          const psProfile = execSync(
+            `${shell.cmd} -NoProfile -Command "$PROFILE"`,
+            {
+              encoding: "utf8",
+              stdio: ["ignore", "pipe", "ignore"],
+            },
+          ).trim();
+
+          if (psProfile && fs.existsSync(psProfile)) {
+            const content = fs.readFileSync(psProfile, "utf8");
+            if (content.includes("<crashcue-start>")) {
+              const hasNewTemplate = content.includes("Template Version: 2");
+              if (hasNewTemplate) {
+                console.log(`✅ ${shell.name} Profile integration found (v2)`);
+              } else {
+                console.log(
+                  `⚠️ ${shell.name} Profile integration found (OUTDATED)`,
+                );
+                console.log("   Run 'crashcue install powershell' to upgrade.");
+              }
+            } else {
+              console.log(`❌ ${shell.name} Profile integration MISSING`);
+            }
           } else {
-            console.log("❌ PowerShell 7 Profile integration MISSING");
+            // Profile file doesn't exist yet, which is normal if not installed
+            console.log(`❌ ${shell.name} Profile file not found`);
           }
-        } else {
-          console.log("❌ PowerShell 7 Profile file not found");
+        } catch (e) {
+          // Shell might not be installed
+          // console.log(`⚠️  ${shell.name} not detected`);
         }
-      } catch (e) {
-        console.log("⚠️  PowerShell 7 not detected or check failed");
       }
 
       // CMD
@@ -249,6 +271,15 @@ export class CLI {
 
   public async install(): Promise<void> {
     console.log("📦 Installing CrashCue Shell Integrations...");
+
+    // 1. Install PowerShell 7 Integration (using new CLI logic)
+    try {
+      await installPowerShell();
+    } catch (e: any) {
+      console.error(`❌ PowerShell installation failed: ${e.message}`);
+    }
+
+    // 2. Install CMD & Git Bash (using existing scripts in notifier package)
     const notifierPath = this.getNotifierPackagePath();
     if (!notifierPath) return;
 
@@ -263,6 +294,15 @@ export class CLI {
 
   public async uninstall(): Promise<void> {
     console.log("🗑 Uninstalling CrashCue Shell Integrations...");
+
+    // 1. Uninstall PowerShell 7 Integration
+    try {
+      await uninstallPowerShell();
+    } catch (e: any) {
+      console.error(`❌ PowerShell uninstallation failed: ${e.message}`);
+    }
+
+    // 2. Uninstall CMD & Git Bash
     const notifierPath = this.getNotifierPackagePath();
     if (!notifierPath) return;
 

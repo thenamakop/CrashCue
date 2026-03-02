@@ -62,7 +62,7 @@ describe("PowerShell Integration Installer", () => {
     await installPowerShell();
     expect(fs.writeFileSync).toHaveBeenCalledWith(
       mockProfilePath,
-      expect.stringContaining("# <crashcue-start>"),
+      expect.stringContaining("Template Version: 2"),
       "utf8",
     );
 
@@ -75,7 +75,7 @@ describe("PowerShell Integration Installer", () => {
 
     expect(fs.writeFileSync).toHaveBeenCalledWith(
       mockProfilePath,
-      expect.stringContaining("# <crashcue-start>"), // Should still contain marker
+      expect.stringContaining("Template Version: 2"), // Should contain new template
       "utf8",
     );
     // Verify it replaced, not appended

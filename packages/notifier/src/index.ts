@@ -3,10 +3,16 @@ import path from "path";
 import { spawn } from "child_process";
 import { EventEmitter } from "events";
 import player from "play-sound";
-import { resolveAssetsDir } from "../../shared-assets/src/index";
+
+const resolveLocalAssetsDir = (): string => {
+  const assetsDir = path.join(__dirname, "assets");
+  const parentAssetsDir = path.resolve(__dirname, "..", "assets");
+  if (fs.existsSync(path.join(assetsDir, "faahhhhhh.wav"))) return assetsDir;
+  return parentAssetsDir;
+};
 
 const getDefaultSoundPath = (): string =>
-  path.join(resolveAssetsDir(), "faahhhhhh.wav");
+  path.join(resolveLocalAssetsDir(), "faahhhhhh.wav");
 
 export interface NotifierOptions {
   sound?: string;

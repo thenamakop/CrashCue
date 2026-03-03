@@ -1,0 +1,16 @@
+node_modules/**
+src/**
+tests/**
+coverage/**
+tsconfig.json
+**/*.ts
+**/*.map
+../cli/**
+../**
+!.vscodeignore
+!package.json
+!dist/**
+!README.md
+!LICENSE
+package-lock.json
+tsconfig.tsbuildinfo

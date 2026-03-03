@@ -30,20 +30,18 @@ cd crashcue
 ------------------------------------------------------------------------
 
 ### 2. Create a Branch
-
-Always create a feature branch from `master`:
+CrashCue uses a master‑only workflow. All changes flow through `master` via pull
+requests. Create a short‑lived topic branch only if you need isolation while
+working, and delete it after the PR merges:
 
 ``` bash
-git checkout -b feature/your-feature-name
+git checkout -b your-change
+git push -u origin your-change
+# open a PR targeting master
 ```
 
-Branch naming conventions:
-
--   `feature/...` -- New features
--   `fix/...` -- Bug fixes
--   `docs/...` -- Documentation updates
--   `refactor/...` -- Code refactoring
--   `test/...` -- Test improvements
+Do not maintain long‑lived branches like `develop`, `release`, `feature/*`, or
+`hotfix/*`. Master is the single source of truth.
 
 ------------------------------------------------------------------------
 

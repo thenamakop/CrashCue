@@ -2,7 +2,14 @@
   "name": "crashcue-vscode",
   "displayName": "CrashCue",
   "description": "Audible feedback for failed terminal commands",
-  "version": "0.1.0",
+  "version": "0.2.0",
+  "publisher": "thenamakop",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thenamakop/CrashCue.git"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/thenamakop/CrashCue#readme",
   "engines": {
     "vscode": "^1.80.0"
   },
@@ -14,9 +21,6 @@
   ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "dependencies": {
-    "@crashcue/cli": "file:../cli"
   },
   "devDependencies": {
     "@types/vscode": "^1.80.0",

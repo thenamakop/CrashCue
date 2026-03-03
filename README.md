@@ -1,3 +1,7 @@
+[![npm](https://img.shields.io/npm/v/crashcue?style=for-the-badge)](https://www.npmjs.com/package/crashcue)
+[![npm](https://img.shields.io/npm/dm/crashcue?style=for-the-badge)](https://www.npmjs.com/package/crashcue)
+[![license](https://img.shields.io/npm/l/crashcue?style=for-the-badge)](https://www.npmjs.com/package/crashcue)
+
 ![CrashCue – Audible terminal failure notifications](assets/CrashCue_Banner_img.png)
 
 # CrashCue
@@ -14,18 +18,18 @@ CrashCue is Windows-first (PowerShell 7+), with a cross-platform Node-based fall
 - 🔊 Customizable sound configuration
 - 🖥️ Native PowerShell integration (Windows)
 - 🐧 Cross-platform fallback support (best-effort)
-- 🩺 Built-in diagnostic report (`crashcue doctor --report`)
+- 🩺 Voluntary diagnostic report (`crashcue doctor --report`)
 - 🔒 Privacy-first: no telemetry, no network calls
 
 ---
 
-## Installation
-
-### Install from npm
+## Install
 
 ```bash
 npm install -g crashcue
 ```
+
+https://www.npmjs.com/package/crashcue
 
 Enable shell integration:
 

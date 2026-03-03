@@ -93,34 +93,14 @@ describe("VSCode Extension", () => {
     expect(spawn).not.toHaveBeenCalled();
   });
 
-  test("should use correct command on Windows", () => {
-    Object.defineProperty(process, "platform", {
-      value: "win32",
-    });
-
+  test("should spawn global crashcue CLI", () => {
     controller.activate();
     const callback = mockOnDidEndTaskProcess.mock.calls[0][0];
     callback({ exitCode: 1 });
 
     expect(spawn).toHaveBeenCalledWith(
-      expect.stringMatching(/crashcue(\.cmd)?$/),
-      expect.arrayContaining(["notify"]),
-      expect.any(Object),
-    );
-  });
-
-  test("should use correct command on Linux/Mac", () => {
-    Object.defineProperty(process, "platform", {
-      value: "linux",
-    });
-
-    controller.activate();
-    const callback = mockOnDidEndTaskProcess.mock.calls[0][0];
-    callback({ exitCode: 1 });
-
-    expect(spawn).toHaveBeenCalledWith(
-      expect.stringMatching(/crashcue$/),
-      expect.arrayContaining(["notify"]),
+      "crashcue",
+      expect.arrayContaining(["test"]),
       expect.any(Object),
     );
   });

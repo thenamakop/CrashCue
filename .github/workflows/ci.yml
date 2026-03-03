@@ -46,15 +46,20 @@ jobs:
             exit 1
           }
 
-      - name: Build Project
-        run: npm run build
+      - name: Build CLI
+        run: npm run build -w packages/cli
 
-      - name: Verify CLI Tarball Installs Without Workspace Coupling
-        run: npm run verify:cli-pack
+      - name: Build VSCode Extension
+        run: |
+          Push-Location packages/vscode-extension
+          npm install
+          npm run build
+          Pop-Location
 
       - name: Pack CLI
         shell: pwsh
         run: |
+          npm run verify:cli-pack
           cd packages/cli
           Remove-Item crashcue-*.tgz -Force -ErrorAction SilentlyContinue
           npm pack
@@ -93,14 +98,15 @@ jobs:
       - name: Package VSCode Extension (VSIX)
         shell: pwsh
         run: |
-          cd packages/vscode-extension
+          Push-Location packages/vscode-extension
           Remove-Item crashcue-vscode-*.vsix -Force -ErrorAction SilentlyContinue
-          npx --yes @vscode/vsce package --no-dependencies
+          npx --yes @vscode/vsce package
+          Pop-Location
 
       - name: Verify VSIX Is Isolated (No node_modules)
         shell: pwsh
         run: |
-          cd packages/vscode-extension
+          Push-Location packages/vscode-extension
           $vsix = Get-ChildItem crashcue-vscode-*.vsix | Select-Object -First 1
           if (-not $vsix) {
             Write-Error "No VSIX produced"
@@ -143,6 +149,7 @@ jobs:
           }
 
           Remove-Item $vsix.FullName -Force
+          Pop-Location
 
       - name: Run Tests with Coverage Enforcement
         run: npm test

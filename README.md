@@ -1,6 +1,5 @@
 [![npm](https://img.shields.io/npm/v/crashcue?style=for-the-badge)](https://www.npmjs.com/package/crashcue)
-[![npm](https://img.shields.io/npm/dm/crashcue?style=for-the-badge)](https://www.npmjs.com/package/crashcue)
-[![license](https://img.shields.io/npm/l/crashcue?style=for-the-badge)](https://www.npmjs.com/package/crashcue)
+[![license](https://img.shields.io/npm/l/crashcue?style=for-the-badge)](LICENSE)
 
 ![CrashCue – Audible terminal failure notifications](assets/CrashCue_Banner_img.png)
 

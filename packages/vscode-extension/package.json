@@ -13,6 +13,12 @@
   "engines": {
     "vscode": "^1.80.0"
   },
+  "files": [
+    "dist",
+    "package.json",
+    "README.md",
+    "LICENSE"
+  ],
   "main": "./dist/extension.js",
   "activationEvents": [
     "onStartupFinished",
@@ -21,6 +27,7 @@
   ],
   "scripts": {
     "build": "node esbuild.config.js",
+    "vscode:prepublish": "npm run build",
     "prepublishOnly": "npm run build"
   },
   "devDependencies": {

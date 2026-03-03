@@ -19,7 +19,10 @@
     "node": ">=18"
   },
   "workspaces": [
-    "packages/*"
+    "packages/cli",
+    "packages/notifier",
+    "packages/shared-assets",
+    "packages/shared-config"
   ],
   "scripts": {
     "test": "jest",

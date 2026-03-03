@@ -12,6 +12,7 @@ build/
 
 # Testing
 coverage/
+.pack-verify/
 
 # OS specific
 .DS_Store

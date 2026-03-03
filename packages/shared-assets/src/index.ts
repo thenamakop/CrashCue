@@ -1,34 +1,15 @@
 import path from "path";
 import fs from "fs";
 
-/**
- * Returns the absolute path to the project root.
- * This assumes the structure is:
- * root/
- *   packages/
- *     shared-assets/
- *       src/
- *         index.ts (source)
- *       dist/
- *         index.js (compiled)
- *
- * So from source: ../../../
- * From dist: ../../../
- *
- * However, depending on where it's run from, relying on __dirname is safest if we know the relative position.
- * The assets are in root/assets/
- */
-const getProjectRoot = (): string => {
-  // Navigate up from packages/shared-assets/src (or dist) to the root
-  // In src: __dirname is .../packages/shared-assets/src
-  // In dist: __dirname is .../packages/shared-assets/dist
-  // Both are 3 levels deep from root if we consider packages/shared-assets/src|dist
-  return path.resolve(__dirname, "..", "..", "..");
-};
+export function resolveAssetsDir(): string {
+  const override = process.env.CRASHCUE_TEST_ASSETS_PATH;
+  if (override) return path.resolve(override);
+
+  return path.resolve(__dirname, "assets");
+}
 
 export const DEFAULT_SOUND_PATH = path.resolve(
-  getProjectRoot(),
-  "assets",
+  resolveAssetsDir(),
   "faahhhhhh.wav",
 );
 

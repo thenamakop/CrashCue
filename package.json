@@ -1,11 +1,9 @@
 {
-  "name": "crashcue",
-  "version": "0.1.1",
+  "name": "crashcue-monorepo",
+  "version": "0.2.0",
+  "private": true,
   "description": "![CrashCue – Make your terminal scream](assets/CrashCue_Banner_img.png) # 🚨 CrashCue",
   "main": "packages/cli/dist/index.js",
-  "bin": {
-    "crashcue": "packages/cli/dist/index.js"
-  },
   "files": [
     "packages/cli/dist",
     "packages/notifier/native-windows.ps1",
@@ -26,7 +24,7 @@
   ],
   "scripts": {
     "test": "jest",
-    "build": "node tools/build-bundle.js",
+    "build": "node tools/build-bundle.js && node tools/verify-packaging.js",
     "prepack": "node ./scripts/copy-shared-assets-into-notifier.js",
     "prepublishOnly": "npm run build",
     "pack:notifier": "node ./scripts/pack-notifier.js"

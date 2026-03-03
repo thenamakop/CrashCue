@@ -1,13 +1,10 @@
-import { Notifier } from "../src/index";
 import path from "path";
 import fs from "fs";
+import { Notifier } from "../src/index";
 import { spawn } from "child_process";
 
-// Mock shared assets before importing notifier
+const MOCK_ASSETS_DIR = "C:\\mock\\assets";
 const MOCK_DEFAULT_SOUND_PATH = "C:\\mock\\assets\\faahhhhhh.wav";
-jest.mock("../../shared-assets/src/index", () => ({
-  DEFAULT_SOUND_PATH: MOCK_DEFAULT_SOUND_PATH,
-}));
 
 // Mock spawn
 jest.mock("child_process", () => ({
@@ -27,6 +24,8 @@ describe("Notifier (Windows-First)", () => {
   const originalPlatform = process.platform;
 
   beforeEach(() => {
+    process.env.CRASHCUE_TEST_ASSETS_PATH = MOCK_ASSETS_DIR;
+
     jest.clearAllMocks();
 
     // Default spawn mock implementation to simulate success
@@ -55,11 +54,11 @@ describe("Notifier (Windows-First)", () => {
     jest
       .spyOn(fs, "statSync")
       .mockReturnValue({ isFile: () => true } as fs.Stats);
-
     notifier = new Notifier();
   });
 
   afterEach(() => {
+    delete process.env.CRASHCUE_TEST_ASSETS_PATH;
     Object.defineProperty(process, "platform", {
       value: originalPlatform,
     });
@@ -241,6 +240,58 @@ describe("Notifier (Windows-First)", () => {
       );
     });
 
+    test("should fallback to DEFAULT_SOUND_PATH if custom path is a directory", async () => {
+      const dirPath = "C:\\path\\to\\dir";
+
+      jest.spyOn(fs, "existsSync").mockImplementation((p: any) => {
+        if (p === dirPath) return true;
+        return true;
+      });
+      jest.spyOn(fs, "statSync").mockImplementation((p: any) => {
+        if (p === dirPath) {
+          return { isFile: () => false } as fs.Stats;
+        }
+        return { isFile: () => true } as fs.Stats;
+      });
+
+      await notifier.notify({ sound: dirPath });
+
+      expect(spawn).toHaveBeenCalledWith(
+        "powershell.exe",
+        expect.arrayContaining([
+          "-File",
+          expect.stringContaining("native-windows.ps1"),
+          "-Path",
+          MOCK_DEFAULT_SOUND_PATH,
+        ]),
+        expect.objectContaining({
+          windowsHide: true,
+          stdio: "ignore",
+        }),
+      );
+    });
+
+    test("should fallback to Node player if spawn throws", async () => {
+      const wavPath = "C:\\path\\to\\sound.wav";
+
+      (spawn as jest.Mock).mockImplementation(() => {
+        throw new Error("Spawn failed");
+      });
+
+      const consoleSpy = jest
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+
+      await notifier.notify({ sound: wavPath });
+
+      expect(spawn).toHaveBeenCalled();
+      expect(mockPlay).toHaveBeenCalledWith(wavPath, expect.any(Function));
+      expect(consoleSpy).toHaveBeenCalledWith(
+        "Native playback failed, falling back to Node player:",
+        expect.any(Error),
+      );
+    });
+
     test("--test flag should use default asset", async () => {
       await notifier.notify({ test: true });
       expect(spawn).toHaveBeenCalledWith(
@@ -286,6 +337,27 @@ describe("Notifier (Windows-First)", () => {
   describe("Non-Windows Playback Logic", () => {
     beforeEach(() => {
       setPlatform("linux");
+    });
+
+    test("should reject when Node player fails on Linux", async () => {
+      const wavPath = "/path/to/sound.wav";
+      const resolvedPath = path.resolve(wavPath);
+
+      mockPlay.mockImplementation(
+        (file: string, optsOrCb: any, cb?: (err?: any) => void) => {
+          let callback = cb;
+          if (typeof optsOrCb === "function") {
+            callback = optsOrCb;
+          }
+          if (callback) callback(new Error("play failed"));
+        },
+      );
+
+      await expect(notifier.notify({ sound: wavPath })).rejects.toThrow(
+        "play failed",
+      );
+      expect(mockPlay).toHaveBeenCalledWith(resolvedPath, expect.any(Function));
+      expect(spawn).not.toHaveBeenCalled();
     });
 
     test("should use Node player for all files on Linux", async () => {

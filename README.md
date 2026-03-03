@@ -71,23 +71,10 @@ Or manually delete content between:
 
 ### Manual Setup (Optional)
 
-To enable silent, native playback directly from your PowerShell profile without spawning Node processes for every command, add this snippet to your `$PROFILE`:
+Use the built-in installer instead:
 
 ```powershell
-# CrashCue native PowerShell integration (safe)
-$CrashCueNotifierPS = "C:\Users\mauli\Documents\Projects\CrashCue\packages\notifier\native-windows.ps1"
-if (Test-Path $CrashCueNotifierPS) {
-  $global:CrashCueLastExit = $null
-  Register-EngineEvent PowerShell.OnIdle -Action {
-    try {
-      if ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne $global:CrashCueLastExit) {
-        # call the native script silently using execution bypass
-        powershell.exe -NoProfile -ExecutionPolicy Bypass -File $CrashCueNotifierPS -Path "C:\Users\mauli\Documents\Projects\CrashCue\assets\faahhhhhh.wav" > $null 2>&1
-      }
-    } catch {}
-    $global:CrashCueLastExit = $LASTEXITCODE
-  } | Out-Null
-}
+crashcue install powershell
 ```
 
 ### Why WAV-only?
@@ -100,7 +87,7 @@ if (Test-Path $CrashCueNotifierPS) {
 
 ---
 
-## � Installation
+## 📦 Installation
 
 ### Install globally
 
@@ -111,7 +98,7 @@ npm install -g crashcue
 ### Enable in your shell
 
 ```bash
-crashcue install-shell
+crashcue install
 ```
 
 Test it:
@@ -144,17 +131,46 @@ To verify the packaging locally on Windows:
 
 ```powershell
 npm ci
+npm test
 npm run build
-npm pack
-$pkg = Get-ChildItem crashcue-*.tgz | Select-Object -First 1
-npm install -g $pkg.Name
-crashcue --help
-crashcue test
 ```
 
 The `crashcue test` command should play the sound silently without opening a media player.
 
 ---
+
+## 🔒 Self-Contained CLI Architecture
+
+CrashCue publishes a single distributable CLI package that is fully self-contained at runtime.
+
+It includes:
+
+- `dist/index.js` (bundled CLI, including internal packages)
+- `dist/native-windows.ps1` (native Windows playback script)
+- `dist/assets/faahhhhhh.wav` (default crash sound)
+
+This means:
+
+- No runtime dependency on `@crashcue/notifier`, `@crashcue/shared-assets`, or `@crashcue/shared-config`
+- Global installs from the packed tarball do not require workspace resolution and do not fetch `@crashcue/*` from the registry
+- `crashcue` runs outside the monorepo (any folder)
+
+### Architecture diagram
+
+CLI (bundled)
+├── Notifier (inlined)
+├── Shared Assets (inlined)
+└── Native Windows Script (copied into dist)
+
+### Development workflow
+
+```powershell
+npm ci
+npm test
+npm run build
+cd packages/cli
+npm pack
+```
 
 ## ⚙️ Configuration
 

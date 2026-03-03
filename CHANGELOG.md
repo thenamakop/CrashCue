@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.2.0 — Self-Contained Distribution Refactor
+
+### Added
+
+- Fully bundled CLI distribution
+- Zero runtime dependency on internal packages
+- Deterministic asset resolution
+- Stable global install behavior
+
+### Changed
+
+- Removed registry dependency on @crashcue/\*
+- Simplified asset resolver logic
+- Improved packaging reliability
+
+### Fixed
+
+- Global install failing due to registry resolution
+- Inconsistent shared-assets resolution
+- Workspace-only dependency leakage
+
 ## v0.1.1 — 2026-03-02
 
 ### Changed

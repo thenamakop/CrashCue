@@ -1,14 +1,21 @@
 import path from "path";
 import fs from "fs";
 import os from "os";
-import { ConfigLoader } from "../src/index";
-import { DEFAULT_SOUND_PATH } from "../../shared-assets/src/index";
 
 jest.mock("os");
 
 describe("Config Loader (Windows-Aware)", () => {
+  let ConfigLoader: typeof import("../src/index").ConfigLoader;
+  let DEFAULT_SOUND_PATH: string;
   const mockUserProfile = "C:\\Users\\TestUser";
   const mockCwd = "C:\\Projects\\TestProject";
+  const realAssetsDir = path.resolve(
+    __dirname,
+    "..",
+    "..",
+    "shared-assets",
+    "assets",
+  );
 
   // Setup paths using path.join for cross-platform consistency in test expectations,
   // but the implementation logic specifically uses Windows conventions where applicable.
@@ -25,6 +32,7 @@ describe("Config Loader (Windows-Aware)", () => {
 
     // Mock environment
     process.env.USERPROFILE = mockUserProfile;
+    process.env.CRASHCUE_TEST_ASSETS_PATH = realAssetsDir;
     (os.homedir as jest.Mock).mockReturnValue(mockUserProfile);
 
     // Mock process.cwd
@@ -33,10 +41,17 @@ describe("Config Loader (Windows-Aware)", () => {
     // Mock fs
     jest.spyOn(fs, "existsSync").mockReturnValue(false);
     jest.spyOn(fs, "readFileSync").mockReturnValue("{}");
+
+    jest.resetModules();
+    ({ ConfigLoader } =
+      require("../src/index") as typeof import("../src/index"));
+    ({ DEFAULT_SOUND_PATH } =
+      require("../../shared-assets/src/index") as typeof import("../../shared-assets/src/index"));
   });
 
   afterEach(() => {
     jest.restoreAllMocks();
+    delete process.env.CRASHCUE_TEST_ASSETS_PATH;
   });
 
   test("should resolve global config path using USERPROFILE on Windows", () => {

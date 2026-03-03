@@ -10,7 +10,6 @@ import {
 import { installGitBash, uninstallGitBash } from "../src/install/gitbash";
 
 // Hoist mocks to ensure they are available
-jest.mock("@crashcue/notifier");
 jest.mock("../../notifier/src/index");
 jest.mock("child_process");
 jest.mock("conf");
@@ -24,7 +23,10 @@ jest.mock("fs", () => {
     mkdirSync: jest.fn(),
     writeFileSync: jest.fn(),
     copyFileSync: jest.fn(),
-    statSync: jest.fn().mockReturnValue({ isFile: () => true }),
+    statSync: jest.fn().mockReturnValue({
+      isFile: () => true,
+      isDirectory: () => true,
+    }),
     promises: {
       readFile: jest.fn().mockResolvedValue(""),
     },

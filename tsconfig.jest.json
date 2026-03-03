@@ -1,7 +1,13 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "noEmit": true
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@crashcue/shared-assets": ["packages/shared-assets/src/index.ts"],
+      "@crashcue/notifier": ["packages/notifier/src/index.ts"],
+      "@crashcue/shared-config": ["packages/shared-config/src/index.ts"]
+    }
   },
   "include": ["**/*"]
 }

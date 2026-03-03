@@ -2,7 +2,7 @@
   "name": "crashcue-vscode",
   "displayName": "CrashCue",
   "description": "Audible feedback for failed terminal commands",
-  "version": "0.2.0",
+  "version": "0.2.2",
   "publisher": "thenamakop",
   "repository": {
     "type": "git",

@@ -1,0 +1,134 @@
+name: CI (VSCode Extension)
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+concurrency:
+  group: ci-vscode-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  vscode:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [20]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - name: Verify Environment
+        run: node -v
+
+      - name: Install Root Dependencies
+        run: npm ci
+
+      - name: Guard Workspaces
+        run: node tools/ci/guard-workspaces.js
+
+      - name: Guard Against NPM Workspace Flags
+        run: node tools/ci/guard-no-npm-workspace-flags.js
+
+      - name: Build VSCode Extension
+        run: |
+          Push-Location packages/vscode-extension
+          npm ci
+          npm run build
+          Pop-Location
+
+      - name: Package VSIX
+        run: |
+          Push-Location packages/vscode-extension
+          Remove-Item crashcue-vscode-*.vsix -Force -ErrorAction SilentlyContinue
+          $out = (npx --yes @vscode/vsce package 2>&1 | Out-String)
+          if ($out -match "warning" -or $out -match "WARNING") {
+            Write-Error "VSCE warnings are not allowed.`n$out"
+            exit 1
+          }
+          Pop-Location
+
+      - name: Validate VSIX Contents
+        run: |
+          Push-Location packages/vscode-extension
+          $vsix = Get-ChildItem crashcue-vscode-*.vsix | Select-Object -First 1
+          if (-not $vsix) { Write-Error "No VSIX produced"; exit 1 }
+
+          if ($vsix.Length -ge 2097152) {
+            Write-Error ("VSIX exceeds 2MB: {0} bytes" -f $vsix.Length)
+            exit 1
+          }
+
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $zip = [System.IO.Compression.ZipFile]::OpenRead($vsix.FullName)
+          $entries = @()
+          foreach ($e in $zip.Entries) { $entries += $e.FullName }
+          $zip.Dispose()
+
+          foreach ($e in $entries) {
+            if ($e -match "\.\.\/" -or $e -match "\.\.\\") {
+              Write-Error "Parent traversal detected in VSIX: $e"
+              exit 1
+            }
+          }
+
+          $outDir = Join-Path $env:RUNNER_TEMP "crashcue-vsix"
+          Remove-Item $outDir -Recurse -Force -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Path $outDir | Out-Null
+          Expand-Archive -Path $vsix.FullName -DestinationPath $outDir -Force
+
+          if (Test-Path (Join-Path $outDir "extension/node_modules")) {
+            Write-Error "node_modules leaked into VSIX"
+            exit 1
+          }
+
+          if (Test-Path (Join-Path $outDir "extension/packages")) {
+            Write-Error "Monorepo packages leaked into VSIX"
+            exit 1
+          }
+
+          if (-not (Test-Path (Join-Path $outDir "extension/dist/extension.js"))) {
+            Write-Error "Missing extension/dist/extension.js in VSIX"
+            exit 1
+          }
+
+          $files = Get-ChildItem -Recurse -File (Join-Path $outDir "extension") | ForEach-Object {
+            $_.FullName.Substring((Join-Path $outDir "extension").Length + 1).Replace("\\","/")
+          }
+
+          if ($files.Count -gt 50) {
+            Write-Error "VSIX file count exceeds 50: $($files.Count)"
+            exit 1
+          }
+
+          $allowed = @(
+            "dist/extension.js",
+            "package.json",
+            "README.md",
+            "readme.md",
+            "LICENSE",
+            "LICENSE.txt"
+          )
+
+          $unexpected = $files | Where-Object { $allowed -notcontains $_ }
+          if ($unexpected.Count -gt 0) {
+            Write-Error ("Unexpected files in VSIX:`n" + ($unexpected -join "`n"))
+            exit 1
+          }
+
+          Remove-Item $vsix.FullName -Force
+          Pop-Location

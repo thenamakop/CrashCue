@@ -1,0 +1,98 @@
+name: CI (CLI)
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+concurrency:
+  group: ci-cli-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cli:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [20]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - name: Verify Environment
+        run: node -v
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Guard Workspaces
+        run: node tools/ci/guard-workspaces.js
+
+      - name: Guard Against NPM Workspace Flags
+        run: node tools/ci/guard-no-npm-workspace-flags.js
+
+      - name: Verify Default Asset Exists (Repo)
+        run: |
+          if (-not (Test-Path "packages/shared-assets/assets/faahhhhhh.wav")) {
+            Write-Error "Mandatory default asset missing: packages/shared-assets/assets/faahhhhhh.wav"
+            exit 1
+          }
+
+      - name: Build (Root)
+        run: npm run build
+
+      - name: Build CLI (Package)
+        run: |
+          Push-Location packages/cli
+          npm run build
+          Pop-Location
+
+      - name: Verify Default Asset Exists (CLI dist)
+        run: |
+          if (-not (Test-Path "packages/cli/dist/assets/faahhhhhh.wav")) {
+            Write-Error "Mandatory default asset missing: packages/cli/dist/assets/faahhhhhh.wav"
+            exit 1
+          }
+
+      - name: Guard Against shared-assets Runtime Imports
+        run: node tools/ci/guard-no-shared-assets-imports.js
+
+      - name: Pack CLI
+        run: |
+          Push-Location packages/cli
+          Remove-Item crashcue-*.tgz -Force -ErrorAction SilentlyContinue
+          $tgz = (npm pack | Select-Object -Last 1).Trim()
+          if (-not $tgz) { Write-Error "npm pack did not return a tarball name"; exit 1 }
+          $tgzPath = (Join-Path (Get-Location) $tgz)
+          if (-not (Test-Path $tgzPath)) { Write-Error "Tarball missing: $tgzPath"; exit 1 }
+          node ..\..\tools\ci\inspect-cli-tarball.js $tgzPath
+          Pop-Location
+
+      - name: Install CLI Globally and Smoke Test
+        run: |
+          Push-Location packages/cli
+          $pkg = Get-ChildItem crashcue-*.tgz | Select-Object -First 1
+          if (-not $pkg) { Write-Error "No CLI tarball found"; exit 1 }
+          npm uninstall -g crashcue 2>$null
+          npm install -g $pkg.FullName
+          Get-Command crashcue -ErrorAction Stop | Out-Null
+          crashcue --help
+          crashcue test
+          crashcue doctor --report
+          Pop-Location
+
+      - name: Tests (Coverage)
+        run: npm test

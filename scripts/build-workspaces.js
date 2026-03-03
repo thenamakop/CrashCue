@@ -43,8 +43,6 @@ function ensureExtensionDeps() {
 
 if (!target) {
   runNpm(["run", "build"], { cwd: cliDir });
-  ensureExtensionDeps();
-  runNpm(["run", "build"], { cwd: extDir });
 } else if (target === "cli") {
   runNpm(["run", "build"], { cwd: cliDir });
 } else if (target === "ext") {

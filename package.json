@@ -1,5 +1,6 @@
 {
   "name": "crashcue-monorepo",
+  "version": "0.2.2",
   "private": true,
   "description": "![CrashCue – Make your terminal scream](assets/CrashCue_Banner_img.png) # 🚨 CrashCue",
   "main": "packages/cli/dist/index.js",

@@ -1,0 +1,110 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: "https://registry.npmjs.org"
+          cache: npm
+
+      - name: Verify Versions Match Tag
+        run: node tools/release/verify-tag-versions.js $env:GITHUB_REF_NAME
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Guard Workspaces
+        run: node tools/ci/guard-workspaces.js
+
+      - name: Guard Against NPM Workspace Flags
+        run: node tools/ci/guard-no-npm-workspace-flags.js
+
+      - name: Verify Default Asset Exists (Repo)
+        run: |
+          if (-not (Test-Path "packages/shared-assets/assets/faahhhhhh.wav")) {
+            Write-Error "Mandatory default asset missing: packages/shared-assets/assets/faahhhhhh.wav"
+            exit 1
+          }
+
+      - name: Build (Root)
+        run: npm run build
+
+      - name: Build CLI (Package)
+        run: |
+          Push-Location packages/cli
+          npm run build
+          Pop-Location
+
+      - name: Guard Against shared-assets Runtime Imports
+        run: node tools/ci/guard-no-shared-assets-imports.js
+
+      - name: Pack and Inspect CLI
+        run: |
+          Push-Location packages/cli
+          Remove-Item crashcue-*.tgz -Force -ErrorAction SilentlyContinue
+          $tgz = (npm pack | Select-Object -Last 1).Trim()
+          if (-not $tgz) { Write-Error "npm pack did not return a tarball name"; exit 1 }
+          $tgzPath = (Join-Path (Get-Location) $tgz)
+          node ..\..\tools\ci\inspect-cli-tarball.js $tgzPath
+          Pop-Location
+
+      - name: Verify CLI Version Not Already Published
+        run: |
+          $ver = $env:GITHUB_REF_NAME.Substring(1)
+          npm view crashcue@$ver version 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            Write-Error "crashcue@$ver already exists on npm"
+            exit 1
+          }
+
+      - name: Publish CLI to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          Push-Location packages/cli
+          npm publish --access public --tag latest
+          Pop-Location
+
+      - name: Verify VSCode Extension Version Not Already Published
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          $ver = $env:GITHUB_REF_NAME.Substring(1)
+          $out = (npx --yes @vscode/vsce show thenamakop.crashcue-vscode --json 2>$null | Out-String)
+          if ($out -match "\"version\"\\s*:\\s*\"$ver\"") {
+            Write-Error "VSCode extension version already published: $ver"
+            exit 1
+          }
+
+      - name: Publish VSCode Extension
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          Push-Location packages/vscode-extension
+          npm ci
+          npm run build
+          npx --yes @vscode/vsce publish -p $env:VSCE_PAT
+          Pop-Location

@@ -319,14 +319,26 @@ Your errors stay on your machine.
 
 ---
 
-## 🛣 Roadmap
+## � Roadmap
 
-- Desktop notification support
-- Custom sound packs
-- Per-project config detection
-- TTS mode ("Your build failed.")
-- GUI configuration app
-- Community sound themes
+CrashCue is actively evolving. Planned improvements include:
+
+### v0.3 — Extensibility & Customization
+
+- 🔔 Per-command notification rules
+- 🎵 Custom sound profiles (per workspace / global)
+- 🧩 Plugin architecture for custom failure handlers
+- 🖥️ Native desktop notifications (Windows/macOS/Linux)
+- ⚙️ Configurable failure thresholds (exit codes, duration-based triggers)
+
+### Future Exploration
+
+- IDE integrations beyond VSCode
+- Optional performance metrics reporting (fully opt-in)
+- Cross-shell enhancements
+- Team-wide shared configuration
+
+CrashCue is designed to remain lightweight, privacy-first, and dependency-safe.
 
 ---
 

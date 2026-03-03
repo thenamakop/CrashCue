@@ -1,4 +1,0 @@
-- [x] `packages/notifier/src/index.ts` exports `class Notifier`.
-- [x] `npm run build` succeeds.
-- [x] `npm test` passes all tests.
-- [x] Asset resolution is lazy (no top-level side effects).

@@ -1,5 +1,10 @@
-# Dependencies
+# Local development artifacts
 node_modules/
+coverage/
+dist-packages/
+.pack-verify/
+
+# Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -10,13 +15,6 @@ lib/
 build/
 *.tgz
 
-# Testing
-coverage/
-.pack-verify/
-
 # OS specific
 .DS_Store
 Thumbs.db
-
-# LLM internal documents
-.llm/

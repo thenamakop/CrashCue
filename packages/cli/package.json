@@ -1,6 +1,6 @@
 {
   "name": "crashcue",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "main": "dist/index.js",
   "type": "commonjs",
   "bin": {
@@ -16,7 +16,6 @@
   "dependencies": {},
   "devDependencies": {
     "@crashcue/notifier": "file:../notifier",
-    "@crashcue/shared-assets": "file:../shared-assets",
     "@crashcue/shared-config": "file:../shared-config",
     "@types/yargs": "^17.0.0",
     "conf": "^10.0.0",

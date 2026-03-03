@@ -3,8 +3,11 @@ import fs from "fs";
 import { Notifier } from "../src/index";
 import { spawn } from "child_process";
 
-const MOCK_ASSETS_DIR = "C:\\mock\\assets";
-const MOCK_DEFAULT_SOUND_PATH = "C:\\mock\\assets\\faahhhhhh.wav";
+const getDefaultSoundPath = (): string => {
+  const moduleEntry = require.resolve("../src/index");
+  const moduleDir = path.dirname(moduleEntry);
+  return path.join(moduleDir, "assets", "faahhhhhh.wav");
+};
 
 // Mock spawn
 jest.mock("child_process", () => ({
@@ -24,8 +27,6 @@ describe("Notifier (Windows-First)", () => {
   const originalPlatform = process.platform;
 
   beforeEach(() => {
-    process.env.CRASHCUE_TEST_ASSETS_PATH = MOCK_ASSETS_DIR;
-
     jest.clearAllMocks();
 
     // Default spawn mock implementation to simulate success
@@ -58,7 +59,6 @@ describe("Notifier (Windows-First)", () => {
   });
 
   afterEach(() => {
-    delete process.env.CRASHCUE_TEST_ASSETS_PATH;
     Object.defineProperty(process, "platform", {
       value: originalPlatform,
     });
@@ -212,6 +212,7 @@ describe("Notifier (Windows-First)", () => {
 
     test("should fallback to DEFAULT_SOUND_PATH if invalid path provided", async () => {
       const invalidPath = "C:\\invalid\\path.wav";
+      const defaultSoundPath = getDefaultSoundPath();
 
       // Mock fs.existsSync to return false for invalidPath and true for others
       jest.spyOn(fs, "existsSync").mockImplementation((p: any) => {
@@ -231,7 +232,7 @@ describe("Notifier (Windows-First)", () => {
           "-File",
           expect.stringContaining("native-windows.ps1"),
           "-Path",
-          MOCK_DEFAULT_SOUND_PATH,
+          defaultSoundPath,
         ]),
         expect.objectContaining({
           windowsHide: true,
@@ -242,6 +243,7 @@ describe("Notifier (Windows-First)", () => {
 
     test("should fallback to DEFAULT_SOUND_PATH if custom path is a directory", async () => {
       const dirPath = "C:\\path\\to\\dir";
+      const defaultSoundPath = getDefaultSoundPath();
 
       jest.spyOn(fs, "existsSync").mockImplementation((p: any) => {
         if (p === dirPath) return true;
@@ -262,7 +264,7 @@ describe("Notifier (Windows-First)", () => {
           "-File",
           expect.stringContaining("native-windows.ps1"),
           "-Path",
-          MOCK_DEFAULT_SOUND_PATH,
+          defaultSoundPath,
         ]),
         expect.objectContaining({
           windowsHide: true,
@@ -293,6 +295,7 @@ describe("Notifier (Windows-First)", () => {
     });
 
     test("--test flag should use default asset", async () => {
+      const defaultSoundPath = getDefaultSoundPath();
       await notifier.notify({ test: true });
       expect(spawn).toHaveBeenCalledWith(
         "powershell.exe",
@@ -300,7 +303,7 @@ describe("Notifier (Windows-First)", () => {
           "-File",
           expect.stringContaining("native-windows.ps1"),
           "-Path",
-          MOCK_DEFAULT_SOUND_PATH,
+          defaultSoundPath,
         ]),
         expect.objectContaining({
           windowsHide: true,
@@ -310,6 +313,7 @@ describe("Notifier (Windows-First)", () => {
     });
 
     test("should use default sound when no options provided", async () => {
+      const defaultSoundPath = getDefaultSoundPath();
       await notifier.notify();
       expect(spawn).toHaveBeenCalledWith(
         "powershell.exe",
@@ -320,7 +324,7 @@ describe("Notifier (Windows-First)", () => {
           "-File",
           expect.stringContaining("native-windows.ps1"),
           "-Path",
-          MOCK_DEFAULT_SOUND_PATH,
+          defaultSoundPath,
         ]),
         expect.objectContaining({
           windowsHide: true,

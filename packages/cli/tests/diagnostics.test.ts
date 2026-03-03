@@ -45,7 +45,7 @@ describe("generateDiagnosticReport (sanitized)", () => {
 
     const report = generateDiagnosticReport();
     expect(report).toContain("CrashCue Diagnostic Report");
-    expect(report).toContain("Version: 0.2.0");
+    expect(report).toContain(`Version: ${require("../package.json").version}`);
     expect(report).toContain("Platform: win32");
     expect(report).toContain(`Node: ${process.version}`);
     expect(report).toContain(`Arch: ${process.arch}`);

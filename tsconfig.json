@@ -5,7 +5,6 @@
     { "path": "./packages/shared-assets" },
     { "path": "./packages/shared-config" },
     { "path": "./packages/notifier" },
-    { "path": "./packages/cli" },
-    { "path": "./packages/vscode-extension" }
+    { "path": "./packages/cli" }
   ]
 }

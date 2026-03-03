@@ -1,11 +1,17 @@
 const { spawnSync } = require("child_process");
+const path = require("path");
+const fs = require("fs");
 
-function runNpm(args) {
+function runNpm(args, opts = {}) {
   const npmExecPath = process.env.npm_execpath;
   const res = npmExecPath
-    ? spawnSync(process.execPath, [npmExecPath, ...args], { stdio: "inherit" })
+    ? spawnSync(process.execPath, [npmExecPath, ...args], {
+        stdio: "inherit",
+        ...opts,
+      })
     : spawnSync(process.platform === "win32" ? "npm.cmd" : "npm", args, {
         stdio: "inherit",
+        ...opts,
       });
 
   if (res.error) {
@@ -19,14 +25,31 @@ function runNpm(args) {
 }
 
 const target = process.argv[2];
+const repoRoot = path.resolve(__dirname, "..");
+const cliDir = path.join(repoRoot, "packages", "cli");
+const extDir = path.join(repoRoot, "packages", "vscode-extension");
+
+function ensureExtensionDeps() {
+  const nodeModulesDir = path.join(extDir, "node_modules");
+  if (fs.existsSync(nodeModulesDir)) return;
+
+  const lockPath = path.join(extDir, "package-lock.json");
+  if (fs.existsSync(lockPath)) {
+    runNpm(["ci", "--no-audit", "--no-fund"], { cwd: extDir });
+  } else {
+    runNpm(["install", "--no-audit", "--no-fund"], { cwd: extDir });
+  }
+}
 
 if (!target) {
-  runNpm(["-w", "packages/cli", "run", "build"]);
-  runNpm(["-w", "packages/vscode-extension", "run", "build"]);
+  runNpm(["run", "build"], { cwd: cliDir });
+  ensureExtensionDeps();
+  runNpm(["run", "build"], { cwd: extDir });
 } else if (target === "cli") {
-  runNpm(["-w", "packages/cli", "run", "build"]);
+  runNpm(["run", "build"], { cwd: cliDir });
 } else if (target === "ext") {
-  runNpm(["-w", "packages/vscode-extension", "run", "build"]);
+  ensureExtensionDeps();
+  runNpm(["run", "build"], { cwd: extDir });
 } else {
   process.exit(1);
 }

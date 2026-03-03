@@ -520,12 +520,16 @@ describe("CrashCue CLI (Windows-Safe)", () => {
         .spyOn(console, "log")
         .mockImplementation(() => {});
 
-      jest.spyOn(cli as any, "getNotifierPackagePath").mockReturnValue("");
+      (fs.existsSync as jest.Mock).mockImplementation((p) => {
+        if (typeof p === "string" && p.includes("native-windows.ps1"))
+          return false;
+        return true;
+      });
 
       await cli.doctor();
 
-      expect(consoleSpy).not.toHaveBeenCalledWith(
-        expect.stringContaining("Native Windows Script"),
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining("Native Windows Script MISSING"),
       );
 
       consoleSpy.mockRestore();
@@ -584,9 +588,18 @@ describe("CrashCue CLI (Windows-Safe)", () => {
         .spyOn(console, "error")
         .mockImplementation(() => {});
 
-      jest.spyOn(cli as any, "getNotifierPackagePath").mockReturnValue("");
+      (fs.existsSync as jest.Mock).mockImplementation((p) => {
+        if (typeof p === "string" && p.includes("native-windows.ps1")) {
+          throw new Error("FS error");
+        }
+        return true;
+      });
 
       await cli.doctor();
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining("Could not check native script"),
+      );
 
       consoleSpy.mockRestore();
       errorSpy.mockRestore();

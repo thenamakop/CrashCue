@@ -26,14 +26,13 @@
     "onCommand:crashcue.test"
   ],
   "scripts": {
-    "build": "node esbuild.config.js",
+    "build": "tsc -p tsconfig.json",
     "vscode:prepublish": "npm run build",
     "prepublishOnly": "npm run build"
   },
   "devDependencies": {
     "@types/vscode": "^1.80.0",
     "@types/node": "^20.0.0",
-    "esbuild": "^0.27.3",
     "typescript": "^5.0.0"
   }
 }

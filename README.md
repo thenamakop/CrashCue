@@ -97,7 +97,8 @@ Release artifacts are engineered to be robust outside the repository:
 Build the CLI (workspace):
 
 ```bash
-npm run build -w packages/cli
+cd packages/cli
+npm run build
 ```
 
 Build the VSCode extension (standalone folder):

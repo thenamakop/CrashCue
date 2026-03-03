@@ -47,7 +47,10 @@ jobs:
           }
 
       - name: Build CLI
-        run: npm run build -w packages/cli
+        run: |
+          Push-Location packages/cli
+          npm run build
+          Pop-Location
 
       - name: Build VSCode Extension
         run: |

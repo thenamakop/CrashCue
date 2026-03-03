@@ -32,6 +32,8 @@ npm install -g crashcue
 
 https://www.npmjs.com/package/crashcue
 
+Note: The CLI is fully self-contained when installed from npm (no external runtime packages required).
+
 Enable shell integration:
 
 ```bash

@@ -49,6 +49,9 @@ jobs:
       - name: Build Project
         run: npm run build
 
+      - name: Verify CLI Tarball Installs Without Workspace Coupling
+        run: npm run verify:cli-pack
+
       - name: Pack CLI
         shell: pwsh
         run: |
@@ -86,6 +89,60 @@ jobs:
           crashcue --help
           crashcue doctor --report
           crashcue test
+
+      - name: Package VSCode Extension (VSIX)
+        shell: pwsh
+        run: |
+          cd packages/vscode-extension
+          Remove-Item crashcue-vscode-*.vsix -Force -ErrorAction SilentlyContinue
+          npx --yes @vscode/vsce package --no-dependencies
+
+      - name: Verify VSIX Is Isolated (No node_modules)
+        shell: pwsh
+        run: |
+          cd packages/vscode-extension
+          $vsix = Get-ChildItem crashcue-vscode-*.vsix | Select-Object -First 1
+          if (-not $vsix) {
+            Write-Error "No VSIX produced"
+            exit 1
+          }
+
+          $outDir = Join-Path $env:RUNNER_TEMP "crashcue-vsix"
+          Remove-Item $outDir -Recurse -Force -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Path $outDir | Out-Null
+          Expand-Archive -Path $vsix.FullName -DestinationPath $outDir -Force
+
+          if (Test-Path (Join-Path $outDir "extension/node_modules")) {
+            Write-Error "node_modules leaked into VSIX"
+            exit 1
+          }
+
+          $expected = @(
+            "extension/dist/extension.js",
+            "extension/package.json",
+            "extension/readme.md",
+            "extension/LICENSE.txt"
+          )
+          foreach ($p in $expected) {
+            if (-not (Test-Path (Join-Path $outDir $p))) {
+              Write-Error "Missing expected file in VSIX: $p"
+              exit 1
+            }
+          }
+
+          $disallowed = @(
+            "extension/src",
+            "extension/tests",
+            "extension/tsconfig.json"
+          )
+          foreach ($p in $disallowed) {
+            if (Test-Path (Join-Path $outDir $p)) {
+              Write-Error "Disallowed path present in VSIX: $p"
+              exit 1
+            }
+          }
+
+          Remove-Item $vsix.FullName -Force
 
       - name: Run Tests with Coverage Enforcement
         run: npm test

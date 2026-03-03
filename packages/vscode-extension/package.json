@@ -19,18 +19,14 @@
     "onCommand:crashcue.run",
     "onCommand:crashcue.test"
   ],
-  "files": [
-    "dist",
-    "README.md",
-    "LICENSE"
-  ],
   "scripts": {
-    "build": "tsc -p .",
+    "build": "node esbuild.config.js",
     "prepublishOnly": "npm run build"
   },
   "devDependencies": {
     "@types/vscode": "^1.80.0",
     "@types/node": "^20.0.0",
+    "esbuild": "^0.27.3",
     "typescript": "^5.0.0"
   }
 }

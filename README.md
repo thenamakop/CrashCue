@@ -1,4 +1,6 @@
 [![npm](https://img.shields.io/npm/v/crashcue?style=for-the-badge)](https://www.npmjs.com/package/crashcue)
+[![Visual Studio Marketplace](https://img.shields.io/visual-studio-marketplace/v/thenamakop.crashcue-vscode?style=for-the-badge)](https://marketplace.visualstudio.com/items?itemName=thenamakop.crashcue-vscode)
+[![CI](https://img.shields.io/github/actions/workflow/status/thenamakop/CrashCue/ci.yml?branch=master&style=for-the-badge)](https://github.com/thenamakop/CrashCue/actions/workflows/ci.yml)
 [![license](https://img.shields.io/npm/l/crashcue?style=for-the-badge)](LICENSE)
 
 ![CrashCue – Audible terminal failure notifications](assets/CrashCue_Banner_img.png)
@@ -67,14 +69,15 @@ crashcue unmute
 
 ---
 
-## 🏗 Architecture Overview
+## Architecture
 
-CrashCue is developed as a small monorepo with clear boundaries:
+CrashCue is structured as a professional multi-package workspace:
 
-- `packages/cli`: the distributable CLI entry point
-- `packages/notifier`: platform-aware playback logic
-- `packages/shared-assets` / `packages/shared-config`: internal building blocks
-- `packages/vscode-extension`: optional IDE integration
+- CLI: self-contained npm-distributed tool
+- Shared Assets: internal package
+- VSCode Extension: bundled and isolated via esbuild
+- No runtime workspace coupling
+- Extension invokes CLI via system command
 
 Release artifacts are engineered to be robust outside the repository:
 

@@ -23,3 +23,20 @@ npm install -g crashcue
 ```bash
 code --install-extension thenamakop.crashcue-vscode
 ```
+
+## Development
+
+This package is intentionally not part of the npm workspaces in this repository.
+
+```bash
+cd packages/vscode-extension
+npm install
+npm run build
+```
+
+Package the VSIX:
+
+```bash
+cd packages/vscode-extension
+npx --yes @vscode/vsce package
+```

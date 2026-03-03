@@ -78,6 +78,7 @@ CrashCue is structured as a professional multi-package workspace:
 - VSCode Extension: bundled and isolated via esbuild
 - No runtime workspace coupling
 - Extension invokes CLI via system command
+- VSCode extension is intentionally not an npm workspace (prevents VSIX parent traversal)
 
 Release artifacts are engineered to be robust outside the repository:
 
@@ -86,6 +87,31 @@ Release artifacts are engineered to be robust outside the repository:
 - **CI tarball smoke testing**: CI packs the CLI, installs the tarball globally, and runs smoke tests (`--help`, `doctor --report`, `test`).
 - **No runtime registry dependencies for tarball installs**: installing the packed tarball does not require fetching internal workspace packages at runtime.
 - **Coverage enforcement**: tests are run with coverage thresholds to prevent regressions.
+
+---
+
+## Development
+
+Build the CLI (workspace):
+
+```bash
+npm run build -w packages/cli
+```
+
+Build the VSCode extension (standalone folder):
+
+```bash
+cd packages/vscode-extension
+npm install
+npm run build
+```
+
+Package the VSCode extension (VSIX):
+
+```bash
+cd packages/vscode-extension
+npx --yes @vscode/vsce package
+```
 
 ---
 

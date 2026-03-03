@@ -10,18 +10,21 @@
 - Stable global install behavior
 - Voluntary sanitized diagnostic report via `crashcue doctor --report`
 - No telemetry, no data collection
+- Fully isolated VSCode extension VSIX packaging (no workspace traversal)
 
 ### Changed
 
 - Removed registry dependency on @crashcue/\*
 - Simplified asset resolver logic
 - Improved packaging reliability
+- CI builds the VSCode extension outside npm workspaces
 
 ### Fixed
 
 - Global install failing due to registry resolution
 - Inconsistent shared-assets resolution
 - Workspace-only dependency leakage
+- VSCode extension packaging including parent directories and sibling packages
 
 ## v0.1.1 — 2026-03-02
 

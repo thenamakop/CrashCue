@@ -11,6 +11,20 @@ function copyFile(src, dest) {
   fs.copyFileSync(src, dest);
 }
 
+function copyDir(srcDir, destDir) {
+  ensureDir(destDir);
+  const entries = fs.readdirSync(srcDir, { withFileTypes: true });
+  for (const entry of entries) {
+    const srcPath = path.join(srcDir, entry.name);
+    const destPath = path.join(destDir, entry.name);
+    if (entry.isDirectory()) {
+      copyDir(srcPath, destPath);
+    } else if (entry.isFile()) {
+      copyFile(srcPath, destPath);
+    }
+  }
+}
+
 function copyBuildAssets(repoRoot) {
   const cliDist = path.join(repoRoot, "packages", "cli", "dist");
 
@@ -22,17 +36,16 @@ function copyBuildAssets(repoRoot) {
   );
   const nativePs1Dest = path.join(cliDist, "native-windows.ps1");
 
-  const wavSrc = path.join(
+  const sharedAssetsSrcDir = path.join(
     repoRoot,
     "packages",
     "shared-assets",
     "assets",
-    "faahhhhhh.wav",
   );
-  const wavDest = path.join(cliDist, "assets", "faahhhhhh.wav");
+  const cliAssetsDestDir = path.join(cliDist, "assets");
 
   copyFile(nativePs1Src, nativePs1Dest);
-  copyFile(wavSrc, wavDest);
+  copyDir(sharedAssetsSrcDir, cliAssetsDestDir);
 }
 
 async function main() {

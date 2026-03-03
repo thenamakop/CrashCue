@@ -8,9 +8,5 @@
   },
   "include": ["src"],
   "exclude": ["dist", "node_modules"],
-  "references": [
-    { "path": "../notifier" },
-    { "path": "../shared-config" },
-    { "path": "../shared-assets" }
-  ]
+  "references": [{ "path": "../notifier" }, { "path": "../shared-config" }]
 }

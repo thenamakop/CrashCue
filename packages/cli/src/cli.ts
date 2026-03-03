@@ -1,6 +1,6 @@
 import { spawn, execSync } from "child_process";
 import { Notifier } from "../../notifier/src/index";
-import { resolveSharedAssets } from "./utils/resolve-shared-assets";
+import { resolveCliDefaultSoundPath } from "./utils/resolve-assets";
 import Conf from "conf";
 import fs from "fs";
 import path from "path";
@@ -37,8 +37,7 @@ export class CLI {
       // Internal command for cross-shell support
       let sound = this.config.get("soundPath");
       if (!sound) {
-        const assetsDir = resolveSharedAssets();
-        sound = path.resolve(assetsDir, "faahhhhhh.wav");
+        sound = resolveCliDefaultSoundPath();
       }
       try {
         await this.notifier.notify({ sound: sound || undefined });
@@ -102,12 +101,7 @@ export class CLI {
           // Play sound
           let sound = this.config.get("soundPath");
           if (!sound) {
-            try {
-              const assetsDir = resolveSharedAssets();
-              sound = path.resolve(assetsDir, "faahhhhhh.wav");
-            } catch (e) {
-              // fallback will be handled by notifier
-            }
+            sound = resolveCliDefaultSoundPath();
           }
           try {
             await this.notifier.notify({ sound: sound || undefined });
@@ -172,34 +166,6 @@ export class CLI {
     await this.notifier.notify({ test: true });
   }
 
-  private getNotifierPackagePath(): string {
-    // When bundled, __dirname is packages/cli/dist (or similar)
-    // We need to find packages/notifier relative to where we are running or installed
-
-    // In dev (monorepo): ../../notifier
-    let notifierPath = path.resolve(__dirname, "../../notifier");
-    if (fs.existsSync(path.join(notifierPath, "package.json"))) {
-      return notifierPath;
-    }
-
-    // In prod (installed): we are in packages/cli/dist
-    // But wait, "files" includes packages/notifier/native-windows.ps1 directly mapped?
-    // "files": [ "packages/cli/dist", "packages/notifier/native-windows.ps1" ]
-    // This maps the structure 1:1 inside the tarball.
-
-    // So if __dirname is .../node_modules/crashcue/packages/cli/dist
-    // Then notifier script is at .../node_modules/crashcue/packages/notifier/native-windows.ps1
-
-    notifierPath = path.resolve(__dirname, "../../notifier");
-    // We check for the script directly now since package.json might not be there if excluded
-    if (fs.existsSync(path.join(notifierPath, "native-windows.ps1"))) {
-      return notifierPath;
-    }
-
-    console.error("Could not locate CrashCue notifier files.");
-    return "";
-  }
-
   public async doctor(report?: boolean): Promise<void> {
     if (report) {
       console.log(generateDiagnosticReport());
@@ -213,14 +179,11 @@ export class CLI {
     // 1. Check Native Script (Windows)
     if (platform === "win32") {
       try {
-        const notifierPath = this.getNotifierPackagePath();
-        if (notifierPath) {
-          const nativeScript = path.join(notifierPath, "native-windows.ps1");
-          if (fs.existsSync(nativeScript)) {
-            console.log("✅ Native Windows Script found");
-          } else {
-            console.log("❌ Native Windows Script MISSING");
-          }
+        const nativeScript = path.resolve(__dirname, "native-windows.ps1");
+        if (fs.existsSync(nativeScript)) {
+          console.log("✅ Native Windows Script found");
+        } else {
+          console.log("❌ Native Windows Script MISSING");
         }
       } catch (e) {
         console.log("❌ Could not check native script");
@@ -237,7 +200,12 @@ export class CLI {
           console.log(`❌ Configured sound MISSING: ${configSound}`);
         }
       } else {
-        console.log("ℹ️  Using default sound configuration");
+        const defaultWav = path.join(__dirname, "assets", "faahhhhhh.wav");
+        if (fs.existsSync(defaultWav)) {
+          console.log(`✅ Default sound present: ${defaultWav}`);
+        } else {
+          console.log(`❌ Default sound MISSING: ${defaultWav}`);
+        }
       }
     } catch (e) {}
 

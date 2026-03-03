@@ -1,21 +1,14 @@
-jest.mock("../../../shared-assets/src/index", () => ({
-  resolveAssetsDir: jest.fn(),
-}));
+import path from "path";
 
-describe("resolveSharedAssets", () => {
-  test("delegates to shared-assets resolver", () => {
-    const sharedAssets = require("../../../shared-assets/src/index") as {
-      resolveAssetsDir: jest.Mock;
+describe("resolveCliAssetsDir", () => {
+  test("resolves assets relative to compiled CLI", () => {
+    const { resolveCliAssetsDir } = require("../utils/resolve-assets") as {
+      resolveCliAssetsDir: () => string;
     };
-    const { resolveSharedAssets } =
-      require("../utils/resolve-shared-assets") as {
-        resolveSharedAssets: () => string;
-      };
 
-    sharedAssets.resolveAssetsDir.mockReturnValue("C:\\mock\\assets");
+    const moduleEntry = require.resolve("../utils/resolve-assets");
+    const expected = path.join(path.dirname(moduleEntry), "assets");
 
-    const dir = resolveSharedAssets();
-    expect(sharedAssets.resolveAssetsDir).toHaveBeenCalledTimes(1);
-    expect(dir).toBe("C:\\mock\\assets");
+    expect(resolveCliAssetsDir()).toBe(expected);
   });
 });

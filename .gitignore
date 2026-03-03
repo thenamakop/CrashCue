@@ -14,6 +14,8 @@ dist/
 lib/
 build/
 *.tgz
+*.tsbuildinfo
+tsconfig.tsbuildinfo
 
 # OS specific
 .DS_Store

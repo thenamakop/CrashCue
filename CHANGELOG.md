@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.2.3
+
+- Harden CI/CD with split CLI + VSCode workflows, deterministic smoke tests, and regression guards.
+- Add tag-driven release workflow with version synchronization checks for npm + VSCE publishing.
+
 ## v0.2.2
 
 - Split CI into CLI and VSCode Extension workflows with hardened smoke tests and regression guards.

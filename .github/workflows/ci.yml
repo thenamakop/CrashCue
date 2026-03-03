@@ -41,20 +41,50 @@ jobs:
 
       - name: Verify Mandatory Default Asset Exists
         run: |
-          if (-Not (Test-Path "packages/notifier/assets/faahhhhhh.wav")) {
-            Write-Error "Mandatory default WAV asset missing at packages/notifier/assets/faahhhhhh.wav"
+          if (-Not (Test-Path "packages/shared-assets/assets/faahhhhhh.wav")) {
+            Write-Error "Mandatory default WAV asset missing at packages/shared-assets/assets/faahhhhhh.wav"
             exit 1
           }
 
       - name: Build Project
         run: npm run build
 
-      - name: Smoke Test Packaged CLI
+      - name: Pack CLI
+        shell: pwsh
         run: |
+          cd packages/cli
+          Remove-Item crashcue-*.tgz -Force -ErrorAction SilentlyContinue
           npm pack
+
+      - name: Install CLI Globally
+        shell: pwsh
+        run: |
+          cd packages/cli
           $pkg = Get-ChildItem crashcue-*.tgz | Select-Object -First 1
-          npm install -g $pkg.Name
+          if (-not $pkg) {
+            Write-Error "No CLI tarball found"
+            exit 1
+          }
+
+          npm uninstall -g crashcue 2>$null
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "crashcue was not previously installed (ok)"
+          }
+
+          npm install -g $pkg.FullName
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "Global install failed"
+            exit 1
+          }
+
+          Get-Command crashcue -ErrorAction Stop | Out-Null
+
+      - name: Smoke Test CLI
+        shell: pwsh
+        run: |
+          crashcue --version
           crashcue --help
+          crashcue doctor --report
           crashcue test
 
       - name: Run Tests with Coverage Enforcement

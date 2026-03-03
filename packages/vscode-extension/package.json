@@ -7,6 +7,11 @@
     "vscode": "^1.80.0"
   },
   "main": "./dist/extension.js",
+  "activationEvents": [
+    "onStartupFinished",
+    "onCommand:crashcue.run",
+    "onCommand:crashcue.test"
+  ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

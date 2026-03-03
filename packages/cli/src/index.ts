@@ -58,9 +58,19 @@ yargs(hideBin(process.argv))
   .command("unmute", "Unmute notifications", {}, async () => {
     await cli.unmute();
   })
-  .command("doctor", "Check CrashCue status and integrations", {}, async () => {
-    await cli.doctor();
-  })
+  .command(
+    "doctor",
+    "Check CrashCue status and integrations",
+    (yargs) => {
+      yargs.option("report", {
+        type: "boolean",
+        describe: "Generate sanitized diagnostic report",
+      });
+    },
+    async (argv) => {
+      await cli.doctor(Boolean(argv.report));
+    },
+  )
   .command("run-sound", false, {}, async () => {
     // Internal command, usually hidden but accessible
     await cli.run(["run-sound"]);

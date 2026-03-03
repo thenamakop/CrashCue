@@ -82,10 +82,12 @@ function main() {
   };
 
   runNode(installedEntry, ["--help"], { cwd: outsideDir, env });
+  runNode(installedEntry, ["doctor", "--report"], { cwd: outsideDir, env });
   runNode(installedEntry, ["test"], { cwd: outsideDir, env });
 
   const secondOutside = path.join(os.tmpdir(), "crashcue-pack-verify");
   resetDir(secondOutside);
+  runNode(installedEntry, ["doctor", "--report"], { cwd: secondOutside, env });
   runNode(installedEntry, ["test"], { cwd: secondOutside, env });
 }
 

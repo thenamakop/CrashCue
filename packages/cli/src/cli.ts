@@ -8,6 +8,7 @@ import os from "os";
 import { installPowerShell, uninstallPowerShell } from "./install/powershell";
 
 import { installGitBash, uninstallGitBash } from "./install/gitbash";
+import { generateDiagnosticReport } from "./diagnostics";
 
 interface CliConfig {
   muted: boolean;
@@ -199,7 +200,11 @@ export class CLI {
     return "";
   }
 
-  public async doctor(): Promise<void> {
+  public async doctor(report?: boolean): Promise<void> {
+    if (report) {
+      console.log(generateDiagnosticReport());
+      return;
+    }
     console.log("🏥 CrashCue Doctor\n");
 
     const platform = process.platform;

@@ -139,6 +139,16 @@ The `crashcue test` command should play the sound silently without opening a med
 
 ---
 
+## 🩺 Diagnostic Report
+
+If you're reporting an issue, run:
+
+```bash
+crashcue doctor --report
+```
+
+Copy and paste the output into your GitHub issue. This report is fully local and does NOT send data anywhere.
+
 ## 🔒 Self-Contained CLI Architecture
 
 CrashCue publishes a single distributable CLI package that is fully self-contained at runtime.

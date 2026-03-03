@@ -8,6 +8,8 @@
 - Zero runtime dependency on internal packages
 - Deterministic asset resolution
 - Stable global install behavior
+- Voluntary sanitized diagnostic report via `crashcue doctor --report`
+- No telemetry, no data collection
 
 ### Changed
 

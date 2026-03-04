@@ -2,8 +2,11 @@
 
 ## v0.2.3
 
-- Harden CI/CD with split CLI + VSCode workflows, deterministic smoke tests, and regression guards.
-- Add tag-driven release workflow with version synchronization checks for npm + VSCE publishing.
+- Make CLI npm installs fully self-contained by removing monorepo-only package dependencies.
+- Bundle notifier runtime assets into its dist output and simplify asset resolution.
+- Remove npm workspace flag usage from scripts/CI to prevent environment-specific failures.
+- Stabilize VSCode extension CI by fixing VSIX path normalization and adding minimal `vscode` type shims for root tests.
+- Add/strengthen packaging guards to prevent runtime imports of internal assets packages.
 
 ## v0.2.2
 

@@ -107,7 +107,7 @@ jobs:
           }
 
           $files = Get-ChildItem -Recurse -File (Join-Path $outDir "extension") | ForEach-Object {
-            $_.FullName.Substring((Join-Path $outDir "extension").Length + 1).Replace("\\","/")
+            $_.FullName.Substring((Join-Path $outDir "extension").Length + 1).Replace('\','/')
           }
 
           if ($files.Count -gt 50) {

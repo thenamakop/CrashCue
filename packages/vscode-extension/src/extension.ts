@@ -10,7 +10,7 @@ export class ExtensionController {
 
   public activate() {
     // Listen for task end events
-    vscode.tasks.onDidEndTaskProcess((event) => {
+    vscode.tasks.onDidEndTaskProcess((event: vscode.TaskProcessEndEvent) => {
       if (event.exitCode !== undefined && event.exitCode !== 0) {
         this.triggerNotification();
       }

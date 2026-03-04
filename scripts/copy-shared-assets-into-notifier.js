@@ -37,17 +37,8 @@ function fail(msg) {
     repoRoot,
     "packages",
     "notifier",
+    "dist",
     "assets",
-  );
-
-  console.log("copy-shared-assets-into-notifier: repoRoot=", repoRoot);
-  console.log(
-    "copy-shared-assets-into-notifier: sharedAssetsDir=",
-    sharedAssetsDir,
-  );
-  console.log(
-    "copy-shared-assets-into-notifier: notifierAssetsDir=",
-    notifierAssetsDir,
   );
 
   if (!fs.existsSync(sharedAssetsDir)) {
@@ -69,9 +60,4 @@ function fail(msg) {
   if (!fs.existsSync(mandatory)) {
     fail(`Mandatory asset not found after copy: ${mandatory}`);
   }
-
-  console.log(
-    "copy-shared-assets-into-notifier: Done. Mandatory asset present:",
-    mandatory,
-  );
 })();

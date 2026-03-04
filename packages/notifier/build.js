@@ -26,16 +26,8 @@ function copyDir(srcDir, destDir) {
 }
 
 function copyBuildAssets(repoRoot) {
-  const cliDist = path.join(repoRoot, "packages", "cli", "dist");
-  const cliRootAssetsDestDir = path.join(repoRoot, "packages", "cli", "assets");
-
-  const nativePs1Src = path.join(
-    repoRoot,
-    "packages",
-    "notifier",
-    "native-windows.ps1",
-  );
-  const nativePs1Dest = path.join(cliDist, "native-windows.ps1");
+  const notifierDir = path.join(repoRoot, "packages", "notifier");
+  const notifierDist = path.join(notifierDir, "dist");
 
   const sharedAssetsSrcDir = path.join(
     repoRoot,
@@ -43,24 +35,42 @@ function copyBuildAssets(repoRoot) {
     "shared-assets",
     "assets",
   );
-  const cliAssetsDestDir = path.join(cliDist, "assets");
+  const notifierAssetsDestDir = path.join(notifierDist, "assets");
 
+  const nativePs1Src = path.join(notifierDir, "native-windows.ps1");
+  const nativePs1Dest = path.join(notifierDist, "native-windows.ps1");
+
+  copyDir(sharedAssetsSrcDir, notifierAssetsDestDir);
   copyFile(nativePs1Src, nativePs1Dest);
-  copyDir(sharedAssetsSrcDir, cliAssetsDestDir);
-  copyDir(sharedAssetsSrcDir, cliRootAssetsDestDir);
 }
 
 async function main() {
   const repoRoot = path.resolve(__dirname, "..", "..");
+  const notifierDir = path.join(repoRoot, "packages", "notifier");
+  const outDir = path.join(notifierDir, "dist");
 
   await esbuild.build({
-    entryPoints: [path.join(repoRoot, "packages", "cli", "src", "index.ts")],
+    entryPoints: [path.join(notifierDir, "src", "index.ts")],
     bundle: true,
     platform: "node",
     target: "node18",
-    outfile: path.join(repoRoot, "packages", "cli", "dist", "index.js"),
+    outfile: path.join(outDir, "index.js"),
     format: "cjs",
     sourcemap: false,
+    external: [],
+  });
+
+  await esbuild.build({
+    entryPoints: [path.join(notifierDir, "src", "cli.ts")],
+    bundle: true,
+    platform: "node",
+    target: "node18",
+    outfile: path.join(outDir, "cli.js"),
+    format: "cjs",
+    sourcemap: false,
+    banner: {
+      js: "#!/usr/bin/env node",
+    },
     external: [],
   });
 

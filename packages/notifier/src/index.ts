@@ -5,10 +5,7 @@ import { EventEmitter } from "events";
 import player from "play-sound";
 
 const resolveLocalAssetsDir = (): string => {
-  const assetsDir = path.join(__dirname, "assets");
-  const parentAssetsDir = path.resolve(__dirname, "..", "assets");
-  if (fs.existsSync(path.join(assetsDir, "faahhhhhh.wav"))) return assetsDir;
-  return parentAssetsDir;
+  return path.join(__dirname, "assets");
 };
 
 const getDefaultSoundPath = (): string =>

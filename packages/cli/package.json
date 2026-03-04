@@ -7,16 +7,19 @@
     "crashcue": "dist/index.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "assets",
+    "package.json",
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
     "build": "node build.js",
+    "prepack": "npm run build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {},
   "devDependencies": {
-    "@crashcue/notifier": "file:../notifier",
-    "@crashcue/shared-config": "file:../shared-config",
     "@types/yargs": "^17.0.0",
     "conf": "^10.0.0",
     "yargs": "^17.0.0",

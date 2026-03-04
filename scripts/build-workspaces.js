@@ -9,10 +9,15 @@ function runNpm(args, opts = {}) {
         stdio: "inherit",
         ...opts,
       })
-    : spawnSync(process.platform === "win32" ? "npm.cmd" : "npm", args, {
-        stdio: "inherit",
-        ...opts,
-      });
+    : process.platform === "win32"
+      ? spawnSync("cmd.exe", ["/d", "/s", "/c", "npm.cmd", ...args], {
+          stdio: "inherit",
+          ...opts,
+        })
+      : spawnSync("npm", args, {
+          stdio: "inherit",
+          ...opts,
+        });
 
   if (res.error) {
     console.error(res.error);

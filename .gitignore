@@ -13,6 +13,7 @@ yarn-error.log*
 dist/
 lib/
 build/
+/packages/cli/assets/
 *.tgz
 *.vsix
 *.tsbuildinfo
